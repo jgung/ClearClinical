@@ -1,0 +1,82 @@
+ABD abdomen
+AFIB atrial fibrillation
+AKA above knee amputation
+AML angiomyolipomas
+AR aortic regurgitation
+ASD atrial septal defect
+ATN acute tubular necrosis
+AV aortic valve
+BRBPR bright red blood per rectum
+BS positive bowel sounds
+BS+ positive bowel sounds
+BS- negative bowel sounds
+CABG coronary artery bypass grafting
+CCA circumflex coronary artery
+CHF congestive heart failure
+CTA computed tomography angiography
+CVA cerebrovascular accident
+DVT deep vein thrombosis
+ECA external carotid artery
+EF ejection fraction
+EOM extraocular muscles
+EOMI extraocular muscles intact
+ESLD end stage liver disease
+ESRD end stage renal disease
+EXT extremity
+GIB gastrointestinal bleeding
+GSW gun shot wound
+HCT hematocrit
+HD hemodialysis
+ICA internal carotid artery
+IJ internal jugular
+IP interphalangeal joint ?
+JVD jugular venous distension
+LA left atrium
+LAA left atrial area
+LAD left anterior descending
+LCX left circumflex artery
+LE lower extremity
+LGI lower gastrointestinal
+LH light headed
+LIMA left internal mammary artery
+LLL left lower lobe
+LMCA left main coronary artery
+LOC loss of consciousness
+LUE left upper extremity
+LV left ventricle
+LVEF left ventricular ejection fraction
+LVH left ventricular hypertrophy
+LVOT left ventricular outflow tract
+MCA middle cerebral artery
+MI myocardial infarction
+MMM moist mucous membranes
+MR mitral regurgitation
+MV mitral valve
+MVA motor vehicle accident
+NAD nothing abnormal detected
+ND non-distended
+NSCLC non small cell lung cancer
+NT non-tender
+OM obtuse marginal branch
+PA pulmonary artery
+PDA posterior descending artery
+PEG percutaneous endoscopic gastrostomy
+PICC peripherally inserted central catheter
+PLB posterior lateral branch
+PNA pneumonia
+POD postoperative day
+PR pulmonary regurgitation
+PUD peptic ulcer disease
+PVD peripheral vascular disease
+RCA right coronary artery
+ROM range of motion
+RUE right upper extremity
+RV right ventricle
+SDA sporadic duodenal adenoma
+SOB shortness of breath
+ST sinus tachycardia
+SVG saphenous vein graft
+TACHY tachycardia
+TR tricuspid regurgitation
+TV tricuspid valve
+VSD ventricular septal defect
