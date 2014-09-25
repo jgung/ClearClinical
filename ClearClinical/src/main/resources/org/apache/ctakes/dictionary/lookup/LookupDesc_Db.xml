@@ -37,14 +37,13 @@
 
 		<dictionary id="DICT_RXNORM" externalResourceKey="RxnormIndexReader" caseSensitive="false">
 			<implementation>
-				<luceneImpl/>
+				<jdbcImpl tableName="umls_ms_2011ab_rxnorm"/>
 			</implementation>
-			<lookupField fieldName="first_word"/>
+			<lookupField fieldName="fword"/>
 			<metaFields>
-				<metaField fieldName="code"/>
-				<metaField fieldName="codeRxNorm"/>
-				<metaField fieldName="preferred_designation"/>
-				<metaField fieldName="other_designation"/>
+				<metaField fieldName="cui"/>
+				<metaField fieldName="tui"/>
+				<metaField fieldName="text"/>
 			</metaFields>
 		</dictionary>
 
@@ -62,7 +61,7 @@
 					<property key="windowAnnotations"
 							  value="org.apache.ctakes.typesystem.type.textspan.LookupWindowAnnotation"/>
 					<property key="exclusionTags"
-							  value="VB,VBD,VBG,VBN,VBP,VBZ,CC,CD,DT,EX,LS,MD,PDT,POS,PP,PP$,PRP,PRP$,RP,TO,WDT,WP,WPS,WRB"/>
+							  value="VB,VBD,VBG,VBN,VBP,VBZ,CC,CD,DT,EX,IN,LS,MD,PDT,POS,PP,PP$,PRP,PRP$,RP,TO,WDT,WP,WPS,WRB"/>
 				</properties>
 			</lookupInitializer>
 			<lookupConsumer className="org.apache.ctakes.dictionary.lookup.ae.UmlsToSnomedDbConsumerImpl">
@@ -84,23 +83,27 @@
 			<dictionaryRef idRef="DICT_RXNORM"/>
 			<lookupInitializer className="org.apache.ctakes.dictionary.lookup.ae.FirstTokenPermLookupInitializerImpl">
 				<properties>
-					<property key="textMetaFields" value="preferred_designation|other_designation"/>
+					<property key="textMetaFields" value="text"/>
 					<property key="maxPermutationLevel" value="7"/>
 					<!--	<property key="windowAnnotations" value="org.apache.ctakes.typesystem.type.textspan.Sentence"/> -->
 					<property key="windowAnnotations"
 							  value="org.apache.ctakes.typesystem.type.textspan.LookupWindowAnnotation"/>
 					<property key="exclusionTags"
-							  value="VB,VBD,VBG,VBN,VBP,VBZ,CC,CD,DT,EX,LS,MD,PDT,POS,PP,PP$,RP,TO,WDT,WP,WPS,WRB"/>
+							  value="VB,VBD,VBG,VBN,VBP,VBZ,CC,CD,DT,EX,IN,LS,MD,PDT,POS,PP,PP$,RP,TO,WDT,WP,WPS,WRB"/>
 				</properties>
 			</lookupInitializer>
-			<lookupConsumer className="org.apache.ctakes.dictionary.lookup.ae.OrangeBookFilterConsumerImpl">
+			<lookupConsumer className="org.apache.ctakes.dictionary.lookup.ae.UmlsToSnomedDbConsumerImpl">
 				<properties>
 					<property key="codingScheme" value="RXNORM"/>
-					<property key="codeMetaField" value="codeRxNorm"/>
-					<!-- Use value="code" for UMLS CUIs -->
-					<property key="luceneFilterExtResrcKey" value="OrangeBookIndexReader"/>
+					<property key="cuiMetaField" value="cui"/>
+					<property key="tuiMetaField" value="tui"/>
+					<property key="medicationTuis"
+							  value="T073,T103,T109,T110,T111,T115,T121,T122,T123,T130,T168,T192,T195,T197,T200,T203"/>
+					<property key="dbConnExtResrcKey" value="OrangeBookIndexReader"/>
+					<property key="mapPrepStmt" value="select CODERXNORM from ORANGE_BOOK where CODE=?"/>
 				</properties>
 			</lookupConsumer>
+
 		</lookupBinding>
 
 	</lookupBindings>
