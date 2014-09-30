@@ -42,8 +42,8 @@ public class TrainTestPipeline
 
 	public static String resourceDirPath = "src/main/resources/";
 
-	public static String semeval_train = resourceDirPath + "semeval-2014-task-7/data/trainsubset";
-	public static String semeval_devel = resourceDirPath + "semeval-2014-task-7/data/develsubset";
+	public static String semeval_train = resourceDirPath + "semeval-2014-task-7/data/train";
+	public static String semeval_devel = resourceDirPath + "semeval-2014-task-7/data/devel";
 	public static String abbrFile = resourceDirPath + "data/abbr.txt";
 	public static String cuiMapFile = resourceDirPath + "data/cuiMap.txt";
 
