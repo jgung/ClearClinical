@@ -20,8 +20,8 @@ import java.util.Collection;
 
 public class ApplicationPipeline
 {
-	public static String semeval_train = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/trainsubset";
-	public static String semeval_test = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/develsubset";
+	public static String semeval_train = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/train";
+	public static String semeval_test = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/devel";
 
 	public static void main(String... args) throws Throwable
 	{
