@@ -7,23 +7,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.assertion.medfacts.cleartk.PolarityCleartkAnalysisEngine;
 import org.apache.ctakes.chunker.ae.Chunker;
 import org.apache.ctakes.chunker.ae.adjuster.ChunkAdjuster;
-//import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.CopyNPChunksToLookupWindowAnnotations;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.RemoveEnclosedLookupWindows;
 import org.apache.ctakes.contexttokenizer.ae.ContextDependentTokenizerAnnotator;
 import org.apache.ctakes.core.ae.SentenceDetector;
-
-
-
-
-
-
-
-
-
-
-import edu.uab.ccts.nlp.uima.annotator.MedicsWriter;
-//import org.apache.ctakes.core.ae.SimpleSegmentAnnotator;
 import edu.uab.ccts.nlp.uima.annotator.SegmentRegexAnnotator;
 
 import org.apache.ctakes.core.ae.TokenizerAnnotatorPTB;
@@ -31,8 +18,6 @@ import org.apache.ctakes.dependency.parser.ae.ClearNLPDependencyParserAE;
 import org.apache.ctakes.dictionary.lookup.ae.UmlsDictionaryLookupAnnotator;
 import org.apache.ctakes.lvg.ae.LvgAnnotator;
 import org.apache.ctakes.postagger.POSTagger;
-import org.apache.ctakes.ytex.kernel.wsd.WordSenseDisambiguator;
-import org.apache.ctakes.ytex.kernel.wsd.WordSenseDisambiguatorImpl;
 import org.apache.ctakes.ytex.uima.annotators.DBConsumer;
 import org.apache.ctakes.ytex.uima.annotators.SenseDisambiguatorAnnotator;
 import org.apache.uima.UIMAFramework;
@@ -51,7 +36,6 @@ import org.uimafit.factory.AnalysisEngineFactory;
 import org.uimafit.pipeline.SimplePipeline;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Collection;
 
@@ -76,7 +60,7 @@ public class ApplicationPipeline
 		Collection<File> testFiles = FileUtils.listFiles(testDir,
 				testExtension, true);
 
-		//TrainTestPipeline.train(trainFiles, crfModelDir, relModelDir);
+		TrainTestPipeline.train(trainFiles, crfModelDir, relModelDir);
 		apply(testFiles, crfModelDir, relModelDir);
 	}
 
@@ -179,10 +163,9 @@ public class ApplicationPipeline
 		    
 		    builder.add(UmlsDictionaryLookupAnnotator.createAnnotatorDescription());
 		    
-		    //FIXME add YTEX WSD to reduce false positives, make sure it works
 			builder.add(AnalysisEngineFactory.createPrimitiveDescription(SenseDisambiguatorAnnotator.class));
 			
-			builder.add(AnalysisEngineFactory.createPrimitiveDescription(MedicsWriter.class));		    
+			//builder.add(AnalysisEngineFactory.createPrimitiveDescription(MedicsWriter.class));		    
 		    
 		    builder.add(ClearNLPDependencyParserAE.createAnnotatorDescription());
 		    builder.add(PolarityCleartkAnalysisEngine.createAnnotatorDescription());
