@@ -6,12 +6,21 @@
 	<groupId>edu.colorado.clear</groupId>
 	<artifactId>ClearClinical</artifactId>
 	<version>1.0-SNAPSHOT</version>
+        <properties>
+                <ctakes.version>3.2.0</ctakes.version>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        </properties>
 	<parent>
 		<groupId>org.apache.ctakes</groupId>
 		<artifactId>ctakes</artifactId>
 		<version>3.2.0</version>
 	</parent>
 	<dependencies>
+<dependency>
+    <groupId>com.oracle</groupId>
+    <artifactId>ojdbc6</artifactId>
+    <version>11.2.0.4</version>
+</dependency>
 		<dependency>
 			<groupId>org.apache.ctakes</groupId>
 			<artifactId>ctakes-assertion</artifactId>
@@ -109,6 +118,30 @@
 			<groupId>org.cleartk</groupId>
 			<artifactId>cleartk-ml-opennlp-maxent</artifactId>
 		</dependency>
+                       <dependency>
+                                <groupId>org.apache.ctakes</groupId>
+                                <artifactId>
+                                        ctakes-ytex
+                                </artifactId>
+                                <!-- <version>${ctakes.version}</version> -->
+                        </dependency>
+                        <dependency>
+                                <groupId>org.apache.ctakes</groupId>
+                                <artifactId>
+                                        ctakes-ytex-uima
+                                </artifactId>
+                                <!-- <version>${ctakes.version}</version> -->
+                        </dependency>
+               <dependency>
+                        <groupId>net.sf.trove4j</groupId>
+                        <artifactId>trove4j</artifactId>
+                        <version>3.0.3</version>
+                </dependency>
+<dependency>
+    <groupId>xml-apis</groupId>
+    <artifactId>xml-apis</artifactId>
+    <version>1.4.01</version>
+</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -215,6 +248,25 @@
 										<execute/>
 									</action>
 								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.jvnet.jax-ws-commons
+										</groupId>
+										<artifactId>
+											jaxws-maven-plugin
+										</artifactId>
+										<versionRange>
+											[2.1,)
+										</versionRange>
+										<goals>
+											<goal>wsimport</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
 							</pluginExecutions>
 						</lifecycleMappingMetadata>
 					</configuration>
@@ -222,4 +274,7 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+	<scm>
+		<url>https://github.com/jgung/ClearClinical</url>
+	</scm>
 </project>
