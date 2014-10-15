@@ -1,0 +1,13 @@
+#!/bin/bash
+gpg -d --output semeval_2015_task14_data.tar semeval_2015_task14_data.tar.gpg
+tar xvf semeval_2015_task14_data.tar
+rm semeval_2015_task14_data.tar
+cd semeval-2015-task-14
+gunzip *.gz
+mv *.tar ../
+cd ..
+for filename in semeval-2015-task-14*.tar; do
+	tar xvf $filename
+	rm $filename
+done
+echo "Done setting up semeval data"
