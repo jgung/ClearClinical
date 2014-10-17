@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/ClearClinical/src/main/java/edu/colorado/clear/clinical/ner/pipeline/TrainTestPipeline.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+<mapEntry key="ctakes.umlsaddr" value="https://uts-ws.nlm.nih.gov/restful/isValidctakes.umlsuser"/>
+<mapEntry key="ctakes.umlspw" value="{umls.password}"/>
+<mapEntry key="ctakes.umlsuser" value="{umls.user}"/>
+<mapEntry key="ctakes.umlsvendor" value="NLM-6515182895"/>
+</mapAttribute>
+<mapAttribute key="org.eclipse.debug.core.preferred_launchers">
+<mapEntry key="[debug]" value="org.eclipse.jdt.launching.localJavaApplication"/>
+</mapAttribute>
+<booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
+<stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.8.0_20"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="edu.colorado.clear.clinical.ner.pipeline.TrainTestPipeline"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ClearClinical"/>
+<stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
+</launchConfiguration>
