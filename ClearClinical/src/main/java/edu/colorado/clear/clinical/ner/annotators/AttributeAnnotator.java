@@ -1,7 +1,6 @@
 package edu.colorado.clear.clinical.ner.annotators;
 
 import edu.colorado.clear.clinical.ner.features.spanfeatures.NormalizedFeaturesExtractor;
-import edu.colorado.clear.clinical.ner.features.spanfeatures.UMLSFeaturesExtractor;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import org.apache.ctakes.typesystem.type.syntax.BaseToken;
 import org.apache.ctakes.typesystem.type.textspan.Sentence;
@@ -22,7 +21,7 @@ import org.cleartk.classifier.feature.extractor.simple.*;
 import org.cleartk.classifier.feature.extractor.simple.CharacterCategoryPatternExtractor.PatternType;
 import org.cleartk.classifier.feature.function.*;
 import org.cleartk.classifier.feature.function.CharacterNGramFeatureFunction.Orientation;
-import org.cleartk.semeval2015.type.DisorderSpan;
+import org.cleartk.semeval2015.type.DiseaseDisorderAttribute;
 import org.cleartk.util.ViewURIUtil;
 import org.uimafit.util.JCasUtil;
 
@@ -30,20 +29,17 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
+public class AttributeAnnotator extends CleartkSequenceAnnotator<String>
 {
+
 	public static boolean VERBOSE = true;
 	protected String discourseSection;
 	private SimpleFeatureExtractor extractor;
-	//	private BILOChunking<BaseToken, DisorderSpan> chunking;
 	private CleartkExtractor contextExtractor;
-	//	private CleartkExtractor umlsContextExtractor;
 	private CleartkExtractor bagExtractor;
-	private UMLSFeaturesExtractor umlsExtractor;
-	//	private IOChunking<BaseToken, DisorderSpan> chunking;
-	private BIOChunking<BaseToken, DisorderSpan> chunking;
+	private BIOChunking<BaseToken, DiseaseDisorderAttribute> chunking;
 
-	public static List<List<Feature>> extractFeatures(JCas jCas, DisorderSpanAnnotator annotator, Sentence s)
+	public static List<List<Feature>> extractFeatures(JCas jCas, AttributeAnnotator annotator, Sentence s)
 			throws AnalysisEngineProcessException
 	{
 		List<BaseToken> tokens = JCasUtil.selectCovered(jCas, BaseToken.class, s);
@@ -64,8 +60,6 @@ public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
 			features.addAll(annotator.extractor.extract(jCas, token));
 			features.addAll(annotator.contextExtractor.extract(jCas, token));
 			features.addAll(annotator.bagExtractor.extract(jCas, token));
-			features.addAll(annotator.umlsExtractor.extract(jCas, token));
-//			features.addAll(annotator.umlsContextExtractor.extract(jCas, token));
 			features.add(new Feature("DISCOURSE_SECTION" + annotator.discourseSection, token.getNormalizedForm()));
 			features.add(new Feature("DOC_TYPE" + docType, token.getNormalizedForm()));
 			features.add(new Feature("DISCOURSE_SECTION", annotator.discourseSection));
@@ -77,8 +71,6 @@ public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
 	public void initialize(UimaContext context) throws ResourceInitializationException
 	{
 		super.initialize(context);
-
-//		SimpleFeatureExtractor topicFeatureExtractor = new TopicFeatureExtractor(new File("data/topicModel64-500.txt"));
 
 		FeatureFunctionExtractor normalizedTokenFeatureExtractor = new FeatureFunctionExtractor(
 				new NormalizedFeaturesExtractor(),
@@ -101,7 +93,6 @@ public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
 				normalizedTokenFeatureExtractor,
 				new CharacterCategoryPatternExtractor(PatternType.REPEATS_MERGED),
 				new TypePathExtractor(BaseToken.class, "partOfSpeech")
-//				,topicFeatureExtractor
 		);
 
 		// the context feature extractor: the features above for the 3 preceding and 3 following tokens
@@ -111,14 +102,6 @@ public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
 				new Preceding(1),
 				new Following(1));
 
-		this.umlsExtractor = new UMLSFeaturesExtractor();
-
-//		this.umlsContextExtractor = new CleartkExtractor(
-//				BaseToken.class,
-//				this.umlsExtractor,
-//				new Preceding(1),
-//				new Following(1));
-
 		this.bagExtractor = new CleartkExtractor(
 				BaseToken.class,
 				new CoveredTextExtractor(),
@@ -126,17 +109,8 @@ public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
 
 		this.chunking = new BIOChunking<>(
 				BaseToken.class,
-				DisorderSpan.class,
-				"chunk");
-
-//		this.chunking = new BILOChunking<BaseToken, DisorderSpan>(
-//				BaseToken.class,
-//				DisorderSpan.class,
-//				"chunk");
-//		this.chunking = new IOChunking<BaseToken, DisorderSpan>(
-//				BaseToken.class,
-//				DisorderSpan.class,
-//				"chunk");
+				DiseaseDisorderAttribute.class,
+				"attributeType");
 
 		discourseSection = "DOC_START";
 
@@ -156,18 +130,18 @@ public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
 				e.printStackTrace();
 			}
 		}
-		if (VERBOSE) System.out.println("Extracting features for: " + ViewURIUtil.getURI(jCas).getPath());
+		if (VERBOSE) System.out.println("Extracting attribute id features for: " + ViewURIUtil.getURI(jCas).getPath());
 		for (Sentence sentence : JCasUtil.select(jCas, Sentence.class))
 		{
 			List<List<Feature>> featureLists = extractFeatures(jCas, this, sentence);
 
 			if (this.isTraining())
 			{
-				List<DisorderSpan> disorderSpans = new ArrayList<>();
+				List<DiseaseDisorderAttribute> attributeSpans = new ArrayList<>();
 
-				disorderSpans.addAll(JCasUtil.selectCovered(
+				attributeSpans.addAll(JCasUtil.selectCovered(
 						jCas,
-						DisorderSpan.class,
+						DiseaseDisorderAttribute.class,
 						sentence.getBegin(), sentence.getEnd()));
 
 				List<BaseToken> goldTokens = JCasUtil.selectCovered(
@@ -175,7 +149,7 @@ public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
 						BaseToken.class,
 						sentence.getBegin(), sentence.getEnd());
 
-				List<String> outcomes = this.chunking.createOutcomes(jCas, goldTokens, disorderSpans);
+				List<String> outcomes = this.chunking.createOutcomes(jCas, goldTokens, attributeSpans);
 				this.dataWriter.write(Instances.toInstances(outcomes, featureLists));
 			} else
 			{

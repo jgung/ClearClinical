@@ -2,7 +2,8 @@ package edu.colorado.clear.clinical.ner.pipeline;
 
 import edu.colorado.clear.clinical.ner.annotators.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
-
+import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
+import edu.uab.ccts.nlp.uima.annotator.SegmentRegexAnnotator;
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.assertion.medfacts.cleartk.PolarityCleartkAnalysisEngine;
 import org.apache.ctakes.chunker.ae.Chunker;
@@ -11,8 +12,6 @@ import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.CopyNPChunksTo
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.RemoveEnclosedLookupWindows;
 import org.apache.ctakes.contexttokenizer.ae.ContextDependentTokenizerAnnotator;
 import org.apache.ctakes.core.ae.SentenceDetector;
-import edu.uab.ccts.nlp.uima.annotator.SegmentRegexAnnotator;
-
 import org.apache.ctakes.core.ae.TokenizerAnnotatorPTB;
 import org.apache.ctakes.dependency.parser.ae.ClearNLPDependencyParserAE;
 import org.apache.ctakes.dictionary.lookup.ae.UmlsDictionaryLookupAnnotator;
@@ -87,13 +86,13 @@ public class ApplicationPipeline
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				ViewCreatorAnnotator.class,
 				ViewCreatorAnnotator.PARAM_VIEW_NAME,
-				DisorderSpanAnnotator.APP_VIEW));
+				SemEval2015Constants.APP_VIEW));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				ViewTextCopierAnnotator.class,
 				ViewTextCopierAnnotator.PARAM_SOURCE_VIEW_NAME,
-				DisorderSpanAnnotator.GOLD_VIEW,
+				SemEval2015Constants.GOLD_VIEW,
 				ViewTextCopierAnnotator.PARAM_DESTINATION_VIEW_NAME,
-				DisorderSpanAnnotator.APP_VIEW));
+				SemEval2015Constants.APP_VIEW));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				CopySentencesAndTokensAnnotator.class));
 

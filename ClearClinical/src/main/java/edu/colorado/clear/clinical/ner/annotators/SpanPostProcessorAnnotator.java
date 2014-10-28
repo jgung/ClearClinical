@@ -1,6 +1,7 @@
 package edu.colorado.clear.clinical.ner.annotators;
 
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
+import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.UTSApiUtil;
 import gov.nih.nlm.umls.uts.webservice.UiLabel;
 import org.apache.commons.io.FileUtils;
@@ -70,7 +71,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 		JCas applicationView = null;
 		try
 		{
-			applicationView = jCas.getView(DisorderSpanAnnotator.APP_VIEW);
+			applicationView = jCas.getView(SemEval2015Constants.APP_VIEW);
 		} catch (CASException e)
 		{
 			e.printStackTrace();

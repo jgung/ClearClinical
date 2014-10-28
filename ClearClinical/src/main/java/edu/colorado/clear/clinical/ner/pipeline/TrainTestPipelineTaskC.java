@@ -4,7 +4,7 @@ import com.google.common.base.Function;
 import edu.colorado.clear.clinical.ner.annotators.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
-import edu.colorado.clear.clinical.ner.util.SemEval2015GoldAnnotator;
+import edu.colorado.clear.clinical.ner.util.SemEval2015TaskCGoldAnnotator;
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory;
 import org.apache.ctakes.typesystem.type.syntax.BaseToken;
@@ -22,7 +22,7 @@ import org.cleartk.classifier.crfsuite.CRFSuiteStringOutcomeDataWriter;
 import org.cleartk.classifier.jar.*;
 import org.cleartk.classifier.libsvm.LIBSVMBooleanOutcomeDataWriter;
 import org.cleartk.eval.AnnotationStatistics;
-import org.cleartk.semeval2015.type.DisorderSpan;
+import org.cleartk.semeval2015.type.DiseaseDisorderAttribute;
 import org.uimafit.component.JCasAnnotator_ImplBase;
 import org.uimafit.component.ViewCreatorAnnotator;
 import org.uimafit.component.ViewTextCopierAnnotator;
@@ -38,20 +38,22 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class TrainTestPipeline
+public class TrainTestPipelineTaskC
 {
 
 	public static String resourceDirPath = "src/main/resources/";
 
-	public static String semeval_train = resourceDirPath + "semeval-2015-task-14/subtasks-a-b/data/train";
-	public static String semeval_devel = resourceDirPath + "semeval-2015-task-14/subtasks-a-b/data/devel";
+	public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/task-c-train/subtask-c/data/train";
+	public static String semeval_devel_c = resourceDirPath + "semeval-2015-task-14/task-c-dev/subtask-c/data/devel";
+
 	public static String abbrFile = resourceDirPath + "data/abbr.txt";
 	public static String cuiMapFile = resourceDirPath + "data/cuiMap.txt";
 
 	public static String crfModels = "target/models/crf";
+	public static String attributeModels = "target/models/attribute";
 	public static String relModels = "target/models/rel";
 
-	public static boolean SPAN_RESOLUTION = true;
+	public static boolean SPAN_RESOLUTION = false;
 	public static boolean VERBOSE = false;
 
 	public static void main(String... args) throws Throwable
@@ -60,21 +62,22 @@ public class TrainTestPipeline
 
 		File crfModelDir = new File(crfModels);
 		File relModelDir = new File(relModels);
+		File attModelDir = new File(attributeModels);
 
-		File trainDir = new File(semeval_train);
-		File testDir = new File(semeval_devel);
+		File trainDir = new File(semeval_train_c);
+		File testDir = new File(semeval_devel_c);
 
 		Collection<File> trainFiles = FileUtils.listFiles(trainDir,
 				trainExtension, true);
 		Collection<File> testFiles = FileUtils.listFiles(testDir,
 				trainExtension, true);
 
-		train(trainFiles, crfModelDir, relModelDir);
-		AnnotationStatistics<String> stats = test(testFiles, crfModelDir, relModelDir);
+		train(trainFiles, crfModelDir, relModelDir, attModelDir);
+		AnnotationStatistics<String> stats = test(testFiles, crfModelDir, relModelDir, attModelDir);
 		System.out.println(stats);
 	}
 
-	public static void train(Collection<File> files, File crfModelDir, File relModelDir) throws Throwable
+	public static void train(Collection<File> files, File ddModelDir, File relModelDir, File attModelDir) throws Throwable
 	{
 		CollectionReader reader = CollectionReaderFactory.createCollectionReader(
 				SemEval2015CollectionReader.class,
@@ -82,22 +85,33 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
-		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
-				SemEval2015GoldAnnotator.PARAM_TRAINING,
+//		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
+
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015TaskCGoldAnnotator.class,
+				SemEval2015TaskCGoldAnnotator.PARAM_TRAINING,
 				true,
-				SemEval2015GoldAnnotator.PARAM_CUI_MAP,
+				SemEval2015TaskCGoldAnnotator.PARAM_CUI_MAP,
 				TrainTestPipeline.cuiMapFile));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(AbbreviationAnnotator.class,
 				AbbreviationAnnotator.PARAM_FILE,
 				new File(abbrFile)));
 
+//		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+//				DisorderSpanAnnotator.class,
+//				CleartkSequenceAnnotator.PARAM_IS_TRAINING,
+//				true,
+//				DefaultSequenceDataWriterFactory.PARAM_OUTPUT_DIRECTORY,
+//				ddModelDir.getPath(),
+//				DefaultSequenceDataWriterFactory.PARAM_DATA_WRITER_CLASS_NAME,
+//				CRFSuiteStringOutcomeDataWriter.class));
+
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
-				DisorderSpanAnnotator.class,
+				AttributeAnnotator.class,
 				CleartkSequenceAnnotator.PARAM_IS_TRAINING,
 				true,
 				DefaultSequenceDataWriterFactory.PARAM_OUTPUT_DIRECTORY,
-				crfModelDir.getPath(),
+				attModelDir.getPath(),
 				DefaultSequenceDataWriterFactory.PARAM_DATA_WRITER_CLASS_NAME,
 				CRFSuiteStringOutcomeDataWriter.class));
 
@@ -124,13 +138,14 @@ public class TrainTestPipeline
 
 		SimplePipeline.runPipeline(reader, builder.createAggregate());
 
-		Train.main(crfModelDir);
+//		Train.main(ddModelDir);
+		Train.main(attModelDir);
 		if (SPAN_RESOLUTION) Train.main(relModelDir, "-c", "10", "-s", "0", "-t", "0");
 
-		SemEval2015GoldAnnotator.writeMapToFile(SemEval2015GoldAnnotator.stringCUIMap, new File(cuiMapFile));
+		SemEval2015TaskCGoldAnnotator.writeMapToFile(SemEval2015TaskCGoldAnnotator.stringCUIMap, new File(cuiMapFile));
 	}
 
-	public static AnnotationStatistics<String> test(Collection<File> files, File crfDir, File relDir) throws Throwable
+	public static AnnotationStatistics<String> test(Collection<File> files, File ddDir, File relDir, File attDir) throws Throwable
 	{
 
 		CollectionReader reader = CollectionReaderFactory.createCollectionReader(
@@ -139,11 +154,12 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
-		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
-				SemEval2015GoldAnnotator.PARAM_TRAINING,
+//		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015TaskCGoldAnnotator.class,
+				SemEval2015TaskCGoldAnnotator.PARAM_TRAINING,
 				false,
-				SemEval2015GoldAnnotator.PARAM_CUI_MAP,
+				SemEval2015TaskCGoldAnnotator.PARAM_CUI_MAP,
 				TrainTestPipeline.cuiMapFile));
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(DocIDAnnotator.class,
@@ -167,12 +183,20 @@ public class TrainTestPipeline
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				CopySentencesAndTokens.class));
 
+//		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+//				DisorderSpanAnnotator.class,
+//				CleartkAnnotator.PARAM_IS_TRAINING,
+//				false,
+//				GenericJarClassifierFactory.PARAM_CLASSIFIER_JAR_PATH,
+//				new File(ddDir, "model.jar")));
+
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
-				DisorderSpanAnnotator.class,
+				AttributeAnnotator.class,
 				CleartkAnnotator.PARAM_IS_TRAINING,
 				false,
 				GenericJarClassifierFactory.PARAM_CLASSIFIER_JAR_PATH,
-				new File(crfDir, "model.jar")));
+				new File(attDir, "model.jar")));
+
 		if (SPAN_RESOLUTION)
 		{
 			builder.add(AnalysisEngineFactory.createPrimitiveDescription(
@@ -190,8 +214,8 @@ public class TrainTestPipeline
 		}
 
 		AnnotationStatistics<String> stats = new AnnotationStatistics<>();
-		Function<DisorderSpan, ?> annotationToSpan = AnnotationStatistics.annotationToSpan();
-		Function<DisorderSpan, String> annotationToOutcome = AnnotationStatistics.annotationToFeatureValue("chunk");
+		Function<DiseaseDisorderAttribute, ?> annotationToSpan = AnnotationStatistics.annotationToSpan();
+		Function<DiseaseDisorderAttribute, String> annotationToOutcome = AnnotationStatistics.annotationToFeatureValue("attributeType");
 
 		if (!VERBOSE) suppressLogging();
 
@@ -200,8 +224,8 @@ public class TrainTestPipeline
 			JCas goldView = jCas.getView(SemEval2015Constants.GOLD_VIEW);
 			JCas systemView = jCas.getView(SemEval2015Constants.APP_VIEW);
 
-			Collection<DisorderSpan> goldSpans = JCasUtil.select(goldView, DisorderSpan.class);
-			Collection<DisorderSpan> systemSpans = JCasUtil.select(systemView, DisorderSpan.class);
+			Collection<DiseaseDisorderAttribute> goldSpans = JCasUtil.select(goldView, DiseaseDisorderAttribute.class);
+			Collection<DiseaseDisorderAttribute> systemSpans = JCasUtil.select(systemView, DiseaseDisorderAttribute.class);
 
 			stats.add(goldSpans, systemSpans, annotationToSpan, annotationToOutcome);
 		}

@@ -2,6 +2,7 @@ package edu.colorado.clear.clinical.ner.annotators;
 
 import com.google.common.collect.Lists;
 import edu.colorado.clear.clinical.ner.features.relfeatures.*;
+import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.SemEval2015GoldAnnotator;
 import org.apache.ctakes.typesystem.type.relation.BinaryTextRelation;
 import org.apache.ctakes.typesystem.type.relation.RelationArgument;
@@ -90,7 +91,7 @@ public class DisjointSpanAnnotator extends CleartkAnnotator<Boolean>
 		{
 			try
 			{
-				appView = jCas.getView(DisorderSpanAnnotator.APP_VIEW);
+				appView = jCas.getView(SemEval2015Constants.APP_VIEW);
 			} catch (CASException e)
 			{
 				e.printStackTrace();
