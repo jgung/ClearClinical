@@ -8,8 +8,8 @@
 </listAttribute>
 <mapAttribute key="org.eclipse.debug.core.environmentVariables">
 <mapEntry key="ctakes.umlsaddr" value="https://uts-ws.nlm.nih.gov/restful/isValidctakes.umlsuser"/>
-<mapEntry key="ctakes.umlspw" value="{umls.password}"/>
-<mapEntry key="ctakes.umlsuser" value="{umls.user}"/>
+<mapEntry key="ctakes.umlsuser" value="your_umls_username"/>
+<mapEntry key="ctakes.umlspw" value="your_umls_password"/>
 <mapEntry key="ctakes.umlsvendor" value="NLM-6515182895"/>
 </mapAttribute>
 <mapAttribute key="org.eclipse.debug.core.preferred_launchers">
@@ -17,7 +17,6 @@
 </mapAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.7.0_55"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="edu.colorado.clear.clinical.ner.pipeline.ApplicationPipeline"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ClearClinical"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>

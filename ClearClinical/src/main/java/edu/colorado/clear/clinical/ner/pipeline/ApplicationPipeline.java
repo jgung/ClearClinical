@@ -10,7 +10,11 @@ import org.apache.ctakes.chunker.ae.adjuster.ChunkAdjuster;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.CopyNPChunksToLookupWindowAnnotations;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.RemoveEnclosedLookupWindows;
 import org.apache.ctakes.contexttokenizer.ae.ContextDependentTokenizerAnnotator;
-import org.apache.ctakes.core.ae.SentenceDetector;
+
+
+
+
+import edu.uab.ccts.nlp.uima.annotator.MedicsWriter;
 import edu.uab.ccts.nlp.uima.annotator.SegmentRegexAnnotator;
 
 import org.apache.ctakes.core.ae.TokenizerAnnotatorPTB;
@@ -20,6 +24,7 @@ import org.apache.ctakes.lvg.ae.LvgAnnotator;
 import org.apache.ctakes.postagger.POSTagger;
 import org.apache.ctakes.ytex.uima.annotators.DBConsumer;
 import org.apache.ctakes.ytex.uima.annotators.SenseDisambiguatorAnnotator;
+import org.apache.ctakes.ytex.uima.annotators.SentenceDetector;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.collection.CollectionReader;
@@ -41,9 +46,13 @@ import java.util.Collection;
 
 public class ApplicationPipeline
 {
-	public static String semeval_train = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/train";
-	public static String semeval_test = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/devel";
+	//public static String semeval_train = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/train";
+	//public static String semeval_test = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/devel";
+	public static String semeval_train = TrainTestPipeline.semeval_train;
+	//public static String semeval_test = TrainTestPipeline.resourceDirPath+"semeval-2015-task-14/subtasks-a-b/data/semeval-2014-test/discharge";
+	public static String semeval_test = TrainTestPipeline.resourceDirPath+"semeval-2015-task-14/subtasks-a-b/data/devel/discharge";
 
+	
 	public static void main(String... args) throws Throwable
 	{
 		String[] testExtension = {SemEval2015CollectionReader.TEXT_SUFFIX};
@@ -60,7 +69,7 @@ public class ApplicationPipeline
 		Collection<File> testFiles = FileUtils.listFiles(testDir,
 				testExtension, true);
 
-		TrainTestPipeline.train(trainFiles, crfModelDir, relModelDir);
+		//TrainTestPipeline.train(trainFiles, crfModelDir, relModelDir);
 		apply(testFiles, crfModelDir, relModelDir);
 	}
 
@@ -140,11 +149,15 @@ public class ApplicationPipeline
 		    //builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
 		    
 		    //New Segment Annotator that does more than make every segment the same
-		    //builder.add(SimpleSegmentAnnotator.createAnnotatorDescription());
 		    builder.add(SegmentRegexAnnotator.createAnnotatorDescription());
 		    
-		    //FIXME New SentenceDetector
-		    builder.add(SentenceDetector.createAnnotatorDescription());
+		    //Using YTEX SentenceDetector
+			builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+					SentenceDetector.class,
+					SentenceDetector.SD_MODEL_FILE_PARAM,
+					"org/apache/ctakes/core/sentdetect/sd-med-model.zip"
+					));
+			
 		   
 		    builder.add(TokenizerAnnotatorPTB.createAnnotatorDescription());
 		    builder.add(LvgAnnotator.createAnnotatorDescription());

@@ -51,7 +51,7 @@ public class TrainTestPipeline
 	public static String relModels = "target/models/rel";
 
 	public static boolean SPAN_RESOLUTION = true;
-	public static boolean VERBOSE = false;
+	public static boolean VERBOSE = true;
 
 	public static void main(String... args) throws Throwable
 	{

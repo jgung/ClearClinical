@@ -101,7 +101,7 @@ public class SegmentRegexAnnotator extends JCasAnnotator_ImplBase {
 				//.getApplicationContext().getBean("segmentRegexDao");
 		        .getApplicationContext().getBean(segmentRegexDaoBeanName);
 		List<SegmentRegex> regexList = segmentRegexDao.getSegmentRegexs();
-		log.info("Got "+regexList.size()+" regexLists");
+		log.debug("Got "+regexList.size()+" regexLists");
 		initRegexMap(regexList);
 	}
 
@@ -122,7 +122,7 @@ public class SegmentRegexAnnotator extends JCasAnnotator_ImplBase {
 	 */
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		log.info("Starting processing Segments.");
+		log.info("Starting SegmentRegexAnnotator with "+regexMap.size()+" segements.");
 		String strDocText = aJCas.getDocumentText();
 		if (strDocText == null)
 			return;
@@ -146,10 +146,10 @@ public class SegmentRegexAnnotator extends JCasAnnotator_ImplBase {
 					}
 				}
 				seg.setId(entry.getKey().getSegmentID());
-				if (log.isDebugEnabled()) {
+				//if (log.isDebugEnabled()) {
 					log.debug("found match: id=" + seg.getId() + ", begin="
-							+ seg.getBegin());
-				}
+							+ seg.getBegin()+" end="+seg.getEnd());
+				//}
 				segmentsAdded.add(seg);
 			}
 		}
@@ -186,11 +186,11 @@ public class SegmentRegexAnnotator extends JCasAnnotator_ImplBase {
 						seg.setEnd(segNext.getBegin() - 1);
 					}
 				}
-				if (log.isDebugEnabled()) {
+				//if (log.isDebugEnabled()) {
 					log.debug("Adding Segment: segment id=" + seg.getId()
 							+ ", begin=" + seg.getBegin() + ", end="
 							+ seg.getEnd());
-				}
+				//}
 				seg.addToIndexes();
 			}
 		}

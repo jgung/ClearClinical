@@ -120,6 +120,14 @@
                                 </artifactId>
                                 <!-- <version>${ctakes.version}</version> -->
                         </dependency>
+
+                       <dependency>
+                                <groupId>org.apache.ctakes</groupId>
+                                <artifactId>
+                                        ctakes-ytex-res
+                                </artifactId>
+                                <!-- <version>${ctakes.version}</version> -->
+                        </dependency>
                         <dependency>
                                 <groupId>org.apache.ctakes</groupId>
                                 <artifactId>

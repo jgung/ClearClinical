@@ -1,0 +1,10 @@
+#!/bin/bash
+# Run from setup directory
+pushd .
+cp ~/.m2/repository/org/apache/ctakes/ctakes-ytex-res/3.2.0/ctakes-ytex-res-3.2.0.jar ../resources/
+cd ../resources
+jar xvf ctakes-ytex-res-3.2.0.jar
+cat ./org/apache/ctakes/ytex/umls/model/UMLS.hbm.template.xml | sed -e 's/@umls.schema@/umls/' | sed -e 's/@filter.umls.catalog@//' > ./org/apache/ctakes/ytex/umls/model/UMLS.hbm.xml
+# Get http://www.ytex-nlp.org/umls.download/secure/3.1/ctakes-ytex-resources-3.1.2-SNAPSHOT.zip and put in resources directory, UMLS login required
+# unzip ctakes-ytex-resources-3.1.2-SNAPSHOT.zip
+popd
