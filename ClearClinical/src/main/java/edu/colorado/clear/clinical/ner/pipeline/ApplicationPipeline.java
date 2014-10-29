@@ -4,6 +4,7 @@ import edu.colorado.clear.clinical.ner.annotators.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.uab.ccts.nlp.uima.annotator.SegmentRegexAnnotator;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.assertion.medfacts.cleartk.PolarityCleartkAnalysisEngine;
 import org.apache.ctakes.chunker.ae.Chunker;
@@ -11,17 +12,6 @@ import org.apache.ctakes.chunker.ae.adjuster.ChunkAdjuster;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.CopyNPChunksToLookupWindowAnnotations;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.RemoveEnclosedLookupWindows;
 import org.apache.ctakes.contexttokenizer.ae.ContextDependentTokenizerAnnotator;
-<<<<<<< HEAD
-
-
-
-
-import edu.uab.ccts.nlp.uima.annotator.MedicsWriter;
-import edu.uab.ccts.nlp.uima.annotator.SegmentRegexAnnotator;
-
-=======
-import org.apache.ctakes.core.ae.SentenceDetector;
->>>>>>> d5c7fbc33ddb9da370dca0e868c019286e766cd5
 import org.apache.ctakes.core.ae.TokenizerAnnotatorPTB;
 import org.apache.ctakes.dependency.parser.ae.ClearNLPDependencyParserAE;
 import org.apache.ctakes.dictionary.lookup.ae.UmlsDictionaryLookupAnnotator;
@@ -49,14 +39,12 @@ import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 
+/**
+ * This is currently just the application pipeline for subtasks-a-b
+ *
+ */
 public class ApplicationPipeline
 {
-	//public static String semeval_train = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/train";
-	//public static String semeval_test = TrainTestPipeline.resourceDirPath + "semeval-2014-task-7/data/devel";
-	public static String semeval_train = TrainTestPipeline.semeval_train;
-	//public static String semeval_test = TrainTestPipeline.resourceDirPath+"semeval-2015-task-14/subtasks-a-b/data/semeval-2014-test/discharge";
-	public static String semeval_test = TrainTestPipeline.resourceDirPath+"semeval-2015-task-14/subtasks-a-b/data/devel/discharge";
-
 	
 	public static void main(String... args) throws Throwable
 	{
@@ -66,15 +54,15 @@ public class ApplicationPipeline
 		File crfModelDir = new File(TrainTestPipeline.crfModels);
 		File relModelDir = new File(TrainTestPipeline.relModels);
 
-		File trainDir = new File(semeval_train);
-		File testDir = new File(semeval_test);
+		File trainDir = new File(TrainTestPipeline.semeval_train);
+		File testDir = new File(TrainTestPipeline.semeval_devel);
 
 		Collection<File> trainFiles = FileUtils.listFiles(trainDir,
 				trainExtension, true);
 		Collection<File> testFiles = FileUtils.listFiles(testDir,
 				testExtension, true);
 
-		//TrainTestPipeline.train(trainFiles, crfModelDir, relModelDir);
+		TrainTestPipeline.train(trainFiles, crfModelDir, relModelDir);
 		apply(testFiles, crfModelDir, relModelDir);
 	}
 
@@ -88,7 +76,6 @@ public class ApplicationPipeline
 		//Replace default pipeline
 		//builder.add(ClinicalPipelineFactory.getDefaultPipeline());
 		builder.add(getClearDefaultPipeline());
-		
 		
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(DocIDAnnotator.class,
 				DocIDAnnotator.PARAM_CUI_MAP_PATH,
@@ -142,12 +129,12 @@ public class ApplicationPipeline
 	
 	  /** Build description of new pipeline, changes versus base pipeline include:
 	   * Replace SimpleSegmentAnnotator with SegmentRegexAnnotator
-	   * Replace SentenceDetectorAnnotator with ytex version
+	   * Replace SentenceDetectorAnnotator with ytex version (allow multi-line sentences)
 	   * Replace DictionaryLookupAnnotator with ytex DictionaryLookupAnnotatorUMLS
-	   * Add YTEX sense disambiguation Annotator
-	   * My stuff:
-	   * Rule based Annotator
-	   * 
+	   * Add YTEX Word Sense Disambiguation
+	   * TODO
+	   * -add rule-based annotator of UAB rules for CUI mapping
+	   * -add appropriate output (database, text files) 
 	   */
 	  public static AnalysisEngineDescription getClearDefaultPipeline() throws ResourceInitializationException{
 		    AggregateBuilder builder = new AggregateBuilder();
@@ -183,7 +170,6 @@ public class ApplicationPipeline
 		    
 			builder.add(AnalysisEngineFactory.createPrimitiveDescription(SenseDisambiguatorAnnotator.class));
 			
-			//builder.add(AnalysisEngineFactory.createPrimitiveDescription(MedicsWriter.class));		    
 		    
 		    builder.add(ClearNLPDependencyParserAE.createAnnotatorDescription());
 		    builder.add(PolarityCleartkAnalysisEngine.createAnnotatorDescription());
