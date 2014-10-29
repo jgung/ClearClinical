@@ -6,6 +6,6 @@
 	<vendor/>
 	<imports>
 		<import name="semeval2015.type.DisorderSpan"/>
-		<import name="semeval2015.type.ShareClefDisease"/>
+		<import name="semeval2015.type.DiseaseDisorderAttribute"/>
 	</imports>
 </typeSystemDescription>

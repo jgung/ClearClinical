@@ -1,5 +1,6 @@
 package edu.colorado.clear.clinical.ner.annotators;
 
+import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import org.apache.ctakes.typesystem.type.syntax.BaseToken;
 import org.apache.ctakes.typesystem.type.textspan.Sentence;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -17,7 +18,7 @@ public class CopySentencesAndTokensAnnotator extends JCasAnnotator_ImplBase
 
 		try
 		{
-			applicationView = jCas.getView(DisorderSpanAnnotator.APP_VIEW);
+			applicationView = jCas.getView(SemEval2015Constants.APP_VIEW);
 		} catch (CASException e)
 		{
 			e.printStackTrace();

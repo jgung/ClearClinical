@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<typeSystemDescription xmlns="http://uima.apache.org/resourceSpecifier">
+	<name>DiseaseDisorderAttribute</name>
+	<description></description>
+	<version></version>
+	<vendor></vendor>
+	<imports>
+		<import name="org.cleartk.score.type.TypeSystem"/>
+	</imports>
+	<types>
+		<typeDescription>
+			<name>org.cleartk.semeval2015.type.DiseaseDisorderAttribute</name>
+			<description/>
+			<supertypeName>org.cleartk.score.type.ScoredAnnotation</supertypeName>
+			<features>
+				<featureDescription>
+					<name>annotation</name>
+					<description/>
+					<rangeTypeName>uima.tcas.Annotation</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>attributeType</name>
+					<description></description>
+					<rangeTypeName>uima.cas.String</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>norm</name>
+					<description></description>
+					<rangeTypeName>uima.cas.String</rangeTypeName>
+				</featureDescription>
+			</features>
+		</typeDescription>
+	</types>
+</typeSystemDescription>
