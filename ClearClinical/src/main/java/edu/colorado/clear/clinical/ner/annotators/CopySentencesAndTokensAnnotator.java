@@ -1,11 +1,16 @@
 package edu.colorado.clear.clinical.ner.annotators;
 
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
+
+import org.apache.ctakes.typesystem.type.refsem.OntologyConcept;
 import org.apache.ctakes.typesystem.type.syntax.BaseToken;
+import org.apache.ctakes.typesystem.type.textsem.IdentifiedAnnotation;
 import org.apache.ctakes.typesystem.type.textspan.Sentence;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;
+import org.apache.uima.cas.FeatureStructure;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.cas.FSArray;
 import org.uimafit.component.JCasAnnotator_ImplBase;
 import org.uimafit.util.JCasUtil;
 
@@ -39,6 +44,21 @@ public class CopySentencesAndTokensAnnotator extends JCasAnnotator_ImplBase
 				tCopy.setTokenNumber(t.getTokenNumber());
 				tCopy.addToIndexes(applicationView);
 			}
+		}
+		for (IdentifiedAnnotation ia : JCasUtil.select(jCas, IdentifiedAnnotation.class))
+		{
+			//I'm afraid to clone this stuff...
+			IdentifiedAnnotation iCopy = new IdentifiedAnnotation(applicationView, ia.getBegin(), ia.getEnd());
+			FSArray oarray = ia.getOntologyConceptArr();
+			if(oarray!=null) {
+				FSArray fsaCopy = new FSArray(applicationView,oarray.size());
+				for(int i=0;i<oarray.size();i++){ 
+					OntologyConcept oc = (OntologyConcept) oarray.get(i);
+					fsaCopy.set(i, oc);
+				}
+				iCopy.setOntologyConceptArr(oarray);
+			}
+			iCopy.addToIndexes(applicationView);
 		}
 	}
 }

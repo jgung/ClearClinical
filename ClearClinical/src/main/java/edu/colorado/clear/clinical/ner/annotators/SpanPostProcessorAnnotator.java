@@ -6,6 +6,8 @@ import edu.colorado.clear.clinical.ner.util.UTSApiUtil;
 import gov.nih.nlm.umls.uts.webservice.UiLabel;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.ctakes.typesystem.type.refsem.OntologyConcept;
 import org.apache.ctakes.typesystem.type.relation.BinaryTextRelation;
 import org.apache.ctakes.typesystem.type.structured.DocumentID;
@@ -46,6 +48,9 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 			description = "cui file path")
 	protected String cuiFilePath = null;
 	protected UTSApiUtil util;
+	
+	private static final Log log = LogFactory
+			.getLog(SpanPostProcessorAnnotator.class);
 
 	public static String getCUI(String coveredText)
 	{
@@ -71,7 +76,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 		String fileName = new File(ViewURIUtil.getURI(jCas).getPath()).getName();
 		String docID = ((DocumentID) JCasUtil.select(jCas, DocumentID.class).toArray()[0]).getDocumentID();
 
-		if (VERBOSE) System.out.println("\t\tSpan post processing: " + docID);
+		log.info("\t\tSpan post processing: " + docID);
 
 		JCas applicationView = null;
 		try
@@ -104,8 +109,11 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 			} else
 			{
 				//Replacing lookup service with YTEX Word Sense Disambiguation
-				for(IdentifiedAnnotation ia : JCasUtil.selectCovered(applicationView,IdentifiedAnnotation.class, arg1.getBegin(),arg1.getEnd())){
-					System.out.println(ia.getCoveredText()+" from: "+ia.getBegin()+"-"+ia.getEnd());
+				log.info("Looking for annotations between "+arg1.getBegin()+" and "+arg1.getEnd());
+				//FIXME need to get overlapping, but no function in JCasUtil
+				//for(IdentifiedAnnotation ia : JCasUtil.selectCovered(applicationView,IdentifiedAnnotation.class, arg1.getBegin(),arg1.getEnd())){
+				for(IdentifiedAnnotation ia : JCasUtil.selectPreceding(applicationView,IdentifiedAnnotation.class, arg1,1)){
+					log.info("COVERING IA:"+ia.getCoveredText()+" from: "+ia.getBegin()+"-"+ia.getEnd());
 					FSArray fsArray = ia.getOntologyConceptArr();
 					if(fsArray==null) continue;
 					for(FeatureStructure featureStructure : fsArray.toArray()){
@@ -113,7 +121,6 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 						if(oc.getDisambiguated()==false) {
 							cui = oc.getCode();
 							add = true;
-							System.out.println("YTEX integration working!");
 						}
 					}
 				}
