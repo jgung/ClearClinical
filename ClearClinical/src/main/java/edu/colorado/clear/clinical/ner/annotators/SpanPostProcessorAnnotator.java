@@ -112,6 +112,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 						OntologyConcept oc = (OntologyConcept) featureStructure;
 						if(oc.getDisambiguated()==false) {
 							cui = oc.getCode();
+							add = true;
 							System.out.println("YTEX integration working!");
 						}
 					}
