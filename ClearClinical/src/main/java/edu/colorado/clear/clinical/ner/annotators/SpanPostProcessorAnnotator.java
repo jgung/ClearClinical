@@ -4,14 +4,19 @@ import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.UTSApiUtil;
 import gov.nih.nlm.umls.uts.webservice.UiLabel;
+
 import org.apache.commons.io.FileUtils;
+import org.apache.ctakes.typesystem.type.refsem.OntologyConcept;
 import org.apache.ctakes.typesystem.type.relation.BinaryTextRelation;
 import org.apache.ctakes.typesystem.type.structured.DocumentID;
+import org.apache.ctakes.typesystem.type.textsem.IdentifiedAnnotation;
 import org.apache.ctakes.typesystem.type.textspan.Sentence;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;
+import org.apache.uima.cas.FeatureStructure;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.cleartk.semeval2015.type.DisorderSpan;
 import org.cleartk.util.ViewURIUtil;
@@ -98,12 +103,29 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 				add = true;
 			} else
 			{
-				List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
-				if (list.size() > 0)
-				{
-					cui = list.get(0).getLabel();
-					add = true;
+				//Replacing lookup service with YTEX Word Sense Disambiguation
+				for(IdentifiedAnnotation ia : JCasUtil.selectCovered(applicationView,IdentifiedAnnotation.class, arg1.getBegin(),arg1.getEnd())){
+					System.out.println(ia.getCoveredText()+" from: "+ia.getBegin()+"-"+ia.getEnd());
+					FSArray fsArray = ia.getOntologyConceptArr();
+					if(fsArray==null) continue;
+					for(FeatureStructure featureStructure : fsArray.toArray()){
+						OntologyConcept oc = (OntologyConcept) featureStructure;
+						if(oc.getDisambiguated()==false) {
+							cui = oc.getCode();
+							System.out.println("YTEX integration working!");
+						}
+					}
 				}
+				//Fallback to historic identification
+				if(cui.equals("CUI_LESS")){
+					List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
+					if (list.size() > 0)
+					{
+						cui = list.get(0).getLabel();
+						add = true;
+					}
+				}
+				
 			}
 
 			if (add)
