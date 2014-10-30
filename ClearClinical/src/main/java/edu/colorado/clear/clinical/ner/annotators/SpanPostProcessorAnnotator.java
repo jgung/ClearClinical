@@ -110,10 +110,10 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 				log.info("Got CUI from direct map lookup:"+cui);
 				add = true;
 			}
-				//} else {
-				//Replacing lookup service with YTEX Word Sense Disambiguation
-				//FIXME need to get overlapping, but no function in JCasUtil
-				//for(IdentifiedAnnotation ia : JCasUtil.selectCovered(applicationView,IdentifiedAnnotation.class, arg1.getBegin(),arg1.getEnd())){
+			//} else {
+			//Replacing lookup service with YTEX Word Sense Disambiguation
+			//FIXME need to get overlapping, but no function in JCasUtil
+			//for(IdentifiedAnnotation ia : JCasUtil.selectCovered(applicationView,IdentifiedAnnotation.class, arg1.getBegin(),arg1.getEnd())){
 			/*
 				for(IdentifiedAnnotation ia : JCasUtil.subiterate(applicationView,IdentifiedAnnotation.class, arg1,true,false)){
 					log.info(text+" - COVERING IA:"+ia.getCoveredText()+" from: "+ia.getBegin()+"-"+ia.getEnd());
@@ -134,9 +134,9 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 						}
 					}
 				}
-				*/
-				//Fallback to historic identification
-				if(cui.equals("CUI_LESS")){
+			 */
+			//Fallback to historic identification
+			if(cui.equals("CUI_LESS")){
 				List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
 				if (list.size() > 0)
 				{
@@ -146,7 +146,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 				} else {
 					log.info(text+" UTS CUI Lookup Failure");
 				}
-				}
+			}
 
 			//}
 
@@ -178,38 +178,37 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 				if (DocIDAnnotator.stringCUIMap.containsKey(text))
 				{
 					cui = getCUI(text);
-					log.info("Disorder:"+text+" Direct Map:"+cui);
+					log.info("Direct Map:"+cui);
 					add = true;
 				} else {
 					List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
 					if (list.size() > 0)
 					{
 						cui = list.get(0).getLabel();
-						log.info("Disorder:"+text+" UTS CUI:"+cui);
+						log.info("UTS CUI:"+cui);
 						add = true;
 					}
-				}
-				int text_length = 0;
-				for(IdentifiedAnnotation ia : JCasUtil.subiterate(applicationView,IdentifiedAnnotation.class, span,true,false)){
-					log.info("YTEX DISORDER IA:"+ia.getCoveredText()+" from: "+ia.getBegin()+"-"+ia.getEnd());
-					FSArray fsArray = ia.getOntologyConceptArr();
-					if(fsArray==null) continue;
-					if(ia.getEnd()-ia.getBegin() < text_length) continue;
-					text_length = ia.getEnd()-ia.getBegin();
-					for(FeatureStructure featureStructure : fsArray.toArray()){
-						OntologyConcept con = (OntologyConcept) featureStructure;
-						UmlsConcept uc = null;
-						if(con instanceof UmlsConcept) uc = (UmlsConcept) con;
-						String message = "YTEX Code:"+uc.getCode()+" CUI:"+uc.getCui()+" SemType:"+uc.getTui()+" Score:"+uc.getScore()+" OID:"+uc.getOid();
-						if(uc.getOid()!=null) message+=" OID:"+uc.getOid();
-						if(uc.getOui()!=null) message+=" OUI:"+uc.getOui();
-						if(uc.getDisambiguated()==true) {
-							message = "YTEX Accepted "+message;
-							cui = uc.getCui();
-							add = true;
-							log.info(message);
-						} else {
-							message = "YTEX Rejected "+message;
+					int text_length = 0;
+					for(IdentifiedAnnotation ia : JCasUtil.subiterate(applicationView,IdentifiedAnnotation.class, span,true,false)){
+						FSArray fsArray = ia.getOntologyConceptArr();
+						if(fsArray==null) continue;
+						if(ia.getEnd()-ia.getBegin() < text_length) continue;
+						text_length = ia.getEnd()-ia.getBegin();
+						for(FeatureStructure featureStructure : fsArray.toArray()){
+							OntologyConcept con = (OntologyConcept) featureStructure;
+							UmlsConcept uc = null;
+							if(con instanceof UmlsConcept) uc = (UmlsConcept) con;
+							String message = "YTEX Got CUI:"+uc.getCui()+" from "+ia.getCoveredText()+"  ;SemType:"+uc.getTui()+" Score:"+uc.getScore();
+							if(uc.getOid()!=null) message+=" OID:"+uc.getOid();
+							if(uc.getOui()!=null) message+=" OUI:"+uc.getOui();
+							if(uc.getDisambiguated()==true) {
+								message = "YTEX Accepted "+message;
+								cui = uc.getCui();
+								add = true;
+								log.info(message);
+							} else {
+								message = "YTEX Rejected "+message;
+							}
 						}
 					}
 				}
@@ -303,5 +302,5 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 
 	}
 
-	
+
 }
