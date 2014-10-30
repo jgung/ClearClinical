@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.ctakes.typesystem.type.refsem.OntologyConcept;
+import org.apache.ctakes.typesystem.type.refsem.UmlsConcept;
 import org.apache.ctakes.typesystem.type.relation.BinaryTextRelation;
 import org.apache.ctakes.typesystem.type.structured.DocumentID;
 import org.apache.ctakes.typesystem.type.textsem.IdentifiedAnnotation;
@@ -48,7 +49,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 			description = "cui file path")
 	protected String cuiFilePath = null;
 	protected UTSApiUtil util;
-	
+
 	private static final Log log = LogFactory
 			.getLog(SpanPostProcessorAnnotator.class);
 
@@ -102,39 +103,52 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 			text = text.replaceAll("\\s+", " ");
 			String cui = CUI_LESS;
 			boolean add = false;
+			log.info("Looking for cuis for binary text relation:"+text);
 			if (DocIDAnnotator.stringCUIMap.containsKey(text))
 			{
 				cui = getCUI(text);
+				log.info("Got CUI from direct map lookup:"+cui);
 				add = true;
-			} else
-			{
+			}
+				//} else {
 				//Replacing lookup service with YTEX Word Sense Disambiguation
-				log.info("Looking for annotations between "+arg1.getBegin()+" and "+arg1.getEnd());
 				//FIXME need to get overlapping, but no function in JCasUtil
 				//for(IdentifiedAnnotation ia : JCasUtil.selectCovered(applicationView,IdentifiedAnnotation.class, arg1.getBegin(),arg1.getEnd())){
-				for(IdentifiedAnnotation ia : JCasUtil.selectPreceding(applicationView,IdentifiedAnnotation.class, arg1,1)){
-					log.info("COVERING IA:"+ia.getCoveredText()+" from: "+ia.getBegin()+"-"+ia.getEnd());
+			/*
+				for(IdentifiedAnnotation ia : JCasUtil.subiterate(applicationView,IdentifiedAnnotation.class, arg1,true,false)){
+					log.info(text+" - COVERING IA:"+ia.getCoveredText()+" from: "+ia.getBegin()+"-"+ia.getEnd());
 					FSArray fsArray = ia.getOntologyConceptArr();
 					if(fsArray==null) continue;
 					for(FeatureStructure featureStructure : fsArray.toArray()){
 						OntologyConcept oc = (OntologyConcept) featureStructure;
-						if(oc.getDisambiguated()==false) {
+						if(oc.getDisambiguated()==true) {
 							cui = oc.getCode();
+							String message = "YTEX Code:"+cui+" Scheme:"+oc.getCodingScheme()+" Score:"+oc.getScore()+" OID:"+oc.getOid();
+							if(oc.getOid()!=null) message+=" OID:"+oc.getOid();
+							if(oc.getOui()!=null) message+=" OUI:"+oc.getOui();
+							log.info(message);
 							add = true;
+						} else {
+							log.info("YTEX Rejected "+oc.getCode());
+
 						}
 					}
 				}
+				*/
 				//Fallback to historic identification
 				if(cui.equals("CUI_LESS")){
-					List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
-					if (list.size() > 0)
-					{
-						cui = list.get(0).getLabel();
-						add = true;
-					}
+				List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
+				if (list.size() > 0)
+				{
+					cui = list.get(0).getLabel();
+					log.info(text+" UTS CUI:"+cui);
+					add = true;
+				} else {
+					log.info(text+" UTS CUI Lookup Failure");
 				}
-				
-			}
+				}
+
+			//}
 
 			if (add)
 			{
@@ -160,17 +174,43 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 				text = text.replaceAll("\\s+", " ");
 				String cui = CUI_LESS;
 				boolean add = false;
+				log.info("LOOKING for cuis for this disorder text :"+text+" in this context:"+s.getCoveredText());
 				if (DocIDAnnotator.stringCUIMap.containsKey(text))
 				{
 					cui = getCUI(text);
+					log.info("Disorder:"+text+" Direct Map:"+cui);
 					add = true;
-				} else
-				{
+				} else {
 					List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
 					if (list.size() > 0)
 					{
 						cui = list.get(0).getLabel();
+						log.info("Disorder:"+text+" UTS CUI:"+cui);
 						add = true;
+					}
+				}
+				int text_length = 0;
+				for(IdentifiedAnnotation ia : JCasUtil.subiterate(applicationView,IdentifiedAnnotation.class, span,true,false)){
+					log.info("YTEX DISORDER IA:"+ia.getCoveredText()+" from: "+ia.getBegin()+"-"+ia.getEnd());
+					FSArray fsArray = ia.getOntologyConceptArr();
+					if(fsArray==null) continue;
+					if(ia.getEnd()-ia.getBegin() < text_length) continue;
+					text_length = ia.getEnd()-ia.getBegin();
+					for(FeatureStructure featureStructure : fsArray.toArray()){
+						OntologyConcept con = (OntologyConcept) featureStructure;
+						UmlsConcept uc = null;
+						if(con instanceof UmlsConcept) uc = (UmlsConcept) con;
+						String message = "YTEX Code:"+uc.getCode()+" CUI:"+uc.getCui()+" SemType:"+uc.getTui()+" Score:"+uc.getScore()+" OID:"+uc.getOid();
+						if(uc.getOid()!=null) message+=" OID:"+uc.getOid();
+						if(uc.getOui()!=null) message+=" OUI:"+uc.getOui();
+						if(uc.getDisambiguated()==true) {
+							message = "YTEX Accepted "+message;
+							cui = uc.getCui();
+							add = true;
+							log.info(message);
+						} else {
+							message = "YTEX Rejected "+message;
+						}
 					}
 				}
 				if (add)
@@ -263,4 +303,5 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 
 	}
 
+	
 }

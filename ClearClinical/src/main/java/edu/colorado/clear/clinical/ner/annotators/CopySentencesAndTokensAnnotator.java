@@ -47,8 +47,17 @@ public class CopySentencesAndTokensAnnotator extends JCasAnnotator_ImplBase
 		}
 		for (IdentifiedAnnotation ia : JCasUtil.select(jCas, IdentifiedAnnotation.class))
 		{
-			//I'm afraid to clone this stuff...
+			//I'm afraid to clone this stuff... following methodology above
 			IdentifiedAnnotation iCopy = new IdentifiedAnnotation(applicationView, ia.getBegin(), ia.getEnd());
+			iCopy.setConditional(ia.getConditional());
+			iCopy.setConfidence(ia.getConfidence());
+			iCopy.setDiscoveryTechnique(ia.getDiscoveryTechnique());
+			iCopy.setGeneric(ia.getGeneric());
+			iCopy.setHistoryOf(ia.getHistoryOf());
+			iCopy.setPolarity(ia.getPolarity());
+			iCopy.setSegmentID(ia.getSegmentID());
+			iCopy.setSubject(ia.getSubject());
+			iCopy.setUncertainty(ia.getUncertainty());
 			FSArray oarray = ia.getOntologyConceptArr();
 			if(oarray!=null) {
 				FSArray fsaCopy = new FSArray(applicationView,oarray.size());
