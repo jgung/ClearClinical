@@ -1,19 +1,15 @@
 package edu.colorado.clear.clinical.ner.pipeline;
 
+import edu.colorado.clear.clinical.ner.annotators.CopySentencesAndTokensAnnotator;
 import com.google.common.base.Function;
 import edu.colorado.clear.clinical.ner.annotators.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.SemEval2015GoldAnnotator;
 import org.apache.commons.io.FileUtils;
-import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory;
-import org.apache.ctakes.typesystem.type.syntax.BaseToken;
-import org.apache.ctakes.typesystem.type.textspan.Sentence;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
-import org.apache.uima.cas.CASException;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.jcas.JCas;
 import org.cleartk.classifier.CleartkAnnotator;
@@ -23,7 +19,6 @@ import org.cleartk.classifier.jar.*;
 import org.cleartk.classifier.libsvm.LIBSVMBooleanOutcomeDataWriter;
 import org.cleartk.eval.AnnotationStatistics;
 import org.cleartk.semeval2015.type.DisorderSpan;
-import org.uimafit.component.JCasAnnotator_ImplBase;
 import org.uimafit.component.ViewCreatorAnnotator;
 import org.uimafit.component.ViewTextCopierAnnotator;
 import org.uimafit.factory.AggregateBuilder;
@@ -45,6 +40,7 @@ public class TrainTestPipeline
 
 	public static String semeval_train = resourceDirPath + "semeval-2015-task-14/subtasks-a-b/data/train";
 	public static String semeval_devel = resourceDirPath + "semeval-2015-task-14/subtasks-a-b/data/devel";
+	public static String minidev = resourceDirPath + "semeval-2015-task-14/subtasks-a-b/data/minidev";
 	public static String abbrFile = resourceDirPath + "data/abbr.txt";
 	public static String cuiMapFile = resourceDirPath + "data/cuiMap.txt";
 
@@ -82,7 +78,8 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+		//builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+		builder.add(ApplicationPipeline.getClearDefaultPipeline());
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
 				true,
@@ -139,7 +136,8 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+		//builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+		builder.add(ApplicationPipeline.getClearDefaultPipeline());
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
 				false,
@@ -165,7 +163,9 @@ public class TrainTestPipeline
 				ViewTextCopierAnnotator.PARAM_DESTINATION_VIEW_NAME,
 				SemEval2015Constants.APP_VIEW));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
-				CopySentencesAndTokens.class));
+				CopySentencesAndTokensAnnotator.class));
+		//builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+		//		CopySentencesAndTokens.class));
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				DisorderSpanAnnotator.class,
@@ -219,36 +219,5 @@ public class TrainTestPipeline
 			logger.setLevel(Level.OFF);
 	}
 
-	public static class CopySentencesAndTokens extends JCasAnnotator_ImplBase
-	{
-		@Override
-		public void process(JCas jCas) throws AnalysisEngineProcessException
-		{
-			JCas appView = null;
-			try
-			{
-				appView = jCas.getView(SemEval2015Constants.APP_VIEW);
-			} catch (CASException e)
-			{
-				e.printStackTrace();
-			}
-			for (Sentence s : JCasUtil.select(jCas, Sentence.class))
-			{
-				Sentence sCopy = new Sentence(appView, s.getBegin(), s.getEnd());
-				sCopy.setSegmentId(s.getSegmentId());
-				sCopy.setSentenceNumber(s.getSentenceNumber());
-				sCopy.addToIndexes(appView);
-				for (BaseToken t : JCasUtil.selectCovered(jCas, BaseToken.class, s))
-				{
-					BaseToken tCopy = new BaseToken(appView, t.getBegin(), t.getEnd());
-					tCopy.setPartOfSpeech(t.getPartOfSpeech());
-					tCopy.setLemmaEntries(t.getLemmaEntries());
-					tCopy.setNormalizedForm(t.getNormalizedForm());
-					tCopy.setTokenNumber(t.getTokenNumber());
-					tCopy.addToIndexes(appView);
-				}
-			}
-		}
-	}
 
 }

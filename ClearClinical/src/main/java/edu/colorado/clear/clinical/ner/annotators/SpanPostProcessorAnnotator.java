@@ -185,7 +185,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 					if (list.size() > 0)
 					{
 						cui = list.get(0).getLabel();
-						log.info("UTS CUI:"+cui);
+						log.info("UTS CUI:"+list.get(0).getUi()+" Label:"+cui);
 						add = true;
 					}
 					int text_length = 0;
