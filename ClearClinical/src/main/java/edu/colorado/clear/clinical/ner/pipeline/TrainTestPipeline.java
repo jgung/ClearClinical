@@ -78,7 +78,6 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		//builder.add(ClinicalPipelineFactory.getDefaultPipeline());
 		builder.add(ApplicationPipeline.getClearDefaultPipeline());
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
@@ -136,7 +135,6 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		//builder.add(ClinicalPipelineFactory.getDefaultPipeline());
 		builder.add(ApplicationPipeline.getClearDefaultPipeline());
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
@@ -164,8 +162,6 @@ public class TrainTestPipeline
 				SemEval2015Constants.APP_VIEW));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				CopySentencesAndTokensAnnotator.class));
-		//builder.add(AnalysisEngineFactory.createPrimitiveDescription(
-		//		CopySentencesAndTokens.class));
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				DisorderSpanAnnotator.class,

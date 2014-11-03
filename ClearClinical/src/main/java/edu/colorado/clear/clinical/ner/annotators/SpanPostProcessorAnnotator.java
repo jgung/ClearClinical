@@ -203,6 +203,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 							if(uc.getOui()!=null) message+=" OUI:"+uc.getOui();
 							if(uc.getDisambiguated()==true) {
 								message = "YTEX Accepted "+message;
+								if(uc.getScore()<1) continue;
 								cui = uc.getCui();
 								add = true;
 								log.info(message);
