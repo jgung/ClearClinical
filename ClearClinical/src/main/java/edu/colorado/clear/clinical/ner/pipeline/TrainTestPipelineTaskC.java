@@ -1,10 +1,12 @@
 package edu.colorado.clear.clinical.ner.pipeline;
 
 import com.google.common.base.Function;
+
 import edu.colorado.clear.clinical.ner.annotators.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.SemEval2015TaskCGoldAnnotator;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory;
 import org.apache.ctakes.typesystem.type.syntax.BaseToken;
@@ -38,6 +40,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * This should correspond to Task 2a
+ * @author ozborn
+ *
+ */
 public class TrainTestPipelineTaskC
 {
 
