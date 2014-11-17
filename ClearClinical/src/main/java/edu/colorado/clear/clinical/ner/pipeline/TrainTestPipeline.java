@@ -1,11 +1,15 @@
 package edu.colorado.clear.clinical.ner.pipeline;
 
 import edu.colorado.clear.clinical.ner.annotators.CopySentencesAndTokensAnnotator;
+
 import com.google.common.base.Function;
+
 import edu.colorado.clear.clinical.ner.annotators.*;
+import edu.colorado.clear.clinical.ner.util.SemEval2015CUIAnnotationStatistics;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.SemEval2015GoldAnnotator;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -33,6 +37,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * This should correspond to Task 1 for Semeval 2015
+ *
+ */
 public class TrainTestPipeline
 {
 
@@ -65,8 +73,9 @@ public class TrainTestPipeline
 		Collection<File> testFiles = FileUtils.listFiles(testDir,
 				trainExtension, true);
 
-		train(trainFiles, crfModelDir, relModelDir);
+		//train(trainFiles, crfModelDir, relModelDir);
 		AnnotationStatistics<String> stats = test(testFiles, crfModelDir, relModelDir);
+		System.out.println("Spanning stats");
 		System.out.println(stats);
 	}
 
@@ -186,6 +195,7 @@ public class TrainTestPipeline
 		}
 
 		AnnotationStatistics<String> stats = new AnnotationStatistics<>();
+		SemEval2015CUIAnnotationStatistics cuistats = new SemEval2015CUIAnnotationStatistics();
 		Function<DisorderSpan, ?> annotationToSpan = AnnotationStatistics.annotationToSpan();
 		Function<DisorderSpan, String> annotationToOutcome = AnnotationStatistics.annotationToFeatureValue("chunk");
 
@@ -198,8 +208,11 @@ public class TrainTestPipeline
 
 			Collection<DisorderSpan> goldSpans = JCasUtil.select(goldView, DisorderSpan.class);
 			Collection<DisorderSpan> systemSpans = JCasUtil.select(systemView, DisorderSpan.class);
-
+			Collection<DisorderSpan> goldCUIMappings = JCasUtil.select(goldView, DisorderSpan.class);
+			Collection<DisorderSpan> systemCUIMappings = JCasUtil.select(systemView, DisorderSpan.class);
+		
 			stats.add(goldSpans, systemSpans, annotationToSpan, annotationToOutcome);
+			cuistats.add(goldCUIMappings,systemCUIMappings);
 		}
 
 		return stats;
