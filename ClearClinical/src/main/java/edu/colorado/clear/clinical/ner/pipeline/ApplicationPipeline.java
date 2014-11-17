@@ -45,6 +45,8 @@ import java.util.Collection;
  */
 public class ApplicationPipeline
 {
+	public static boolean USE_YTEX = false;
+	public static boolean SKIP_TRAINING = false;
 	
 	public static void main(String... args) throws Throwable
 	{
@@ -62,6 +64,11 @@ public class ApplicationPipeline
 		Collection<File> testFiles = FileUtils.listFiles(testDir,
 				testExtension, true);
 
+		for(String arg:args){
+			if(arg.equalsIgnoreCase("-ytex")) USE_YTEX=true;
+			if(arg.equalsIgnoreCase("-skiptraining")) SKIP_TRAINING=true;
+		}
+		
 		TrainTestPipeline.train(trainFiles, crfModelDir, relModelDir);
 		apply(testFiles, crfModelDir, relModelDir);
 	}
@@ -75,7 +82,7 @@ public class ApplicationPipeline
 
 		//Replace default pipeline
 		//builder.add(ClinicalPipelineFactory.getDefaultPipeline());
-		builder.add(getClearDefaultPipeline());
+		builder.add(getClearDefaultPipeline(USE_YTEX));
 		
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(DocIDAnnotator.class,
 				DocIDAnnotator.PARAM_CUI_MAP_PATH,
@@ -136,7 +143,7 @@ public class ApplicationPipeline
 	   * -add rule-based annotator of UAB rules for CUI mapping
 	   * -add appropriate output (database, text files) 
 	   */
-	  public static AnalysisEngineDescription getClearDefaultPipeline() throws ResourceInitializationException{
+	  public static AnalysisEngineDescription getClearDefaultPipeline(boolean use_ytex) throws ResourceInitializationException{
 		    AggregateBuilder builder = new AggregateBuilder();
 		    //builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
 		    
@@ -167,8 +174,8 @@ public class ApplicationPipeline
 		    builder.add(AnalysisEngineFactory.createPrimitiveDescription(RemoveEnclosedLookupWindows.class));
 		    
 		    builder.add(UmlsDictionaryLookupAnnotator.createAnnotatorDescription());
-		    
-			builder.add(AnalysisEngineFactory.createPrimitiveDescription(SenseDisambiguatorAnnotator.class));
+	
+		    if(use_ytex) builder.add(AnalysisEngineFactory.createPrimitiveDescription(SenseDisambiguatorAnnotator.class));
 			
 		    
 		    builder.add(ClearNLPDependencyParserAE.createAnnotatorDescription());

@@ -57,6 +57,8 @@ public class TrainTestPipeline
 
 	public static boolean SPAN_RESOLUTION = true;
 	public static boolean VERBOSE = true;
+	public static boolean USE_YTEX = false;
+	public static boolean SKIP_TRAINING = false;
 
 	public static void main(String... args) throws Throwable
 	{
@@ -66,14 +68,26 @@ public class TrainTestPipeline
 		File relModelDir = new File(relModels);
 
 		File trainDir = new File(semeval_train);
-		File testDir = new File(semeval_devel);
+		//File testDir = new File(semeval_devel);
+		File testDir = new File(minidev);
 
 		Collection<File> trainFiles = FileUtils.listFiles(trainDir,
 				trainExtension, true);
 		Collection<File> testFiles = FileUtils.listFiles(testDir,
 				trainExtension, true);
+		
+		for(String arg:args){
+			if(arg.equalsIgnoreCase("-ytex")) {
+				USE_YTEX=true;
+				System.out.println("Using YTEX to Disambiguate");
+			}
+			if(arg.equalsIgnoreCase("-skiptraining")) {
+				System.out.println("Skipping Training");
+				SKIP_TRAINING=true;
+			}
+		}
 
-		//train(trainFiles, crfModelDir, relModelDir);
+		if(!SKIP_TRAINING) train(trainFiles, crfModelDir, relModelDir);
 		AnnotationStatistics<String> stats = test(testFiles, crfModelDir, relModelDir);
 		System.out.println("Spanning stats");
 		System.out.println(stats);
@@ -87,7 +101,7 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ApplicationPipeline.getClearDefaultPipeline());
+		builder.add(ApplicationPipeline.getClearDefaultPipeline(USE_YTEX));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
 				true,
@@ -144,7 +158,7 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ApplicationPipeline.getClearDefaultPipeline());
+		builder.add(ApplicationPipeline.getClearDefaultPipeline(USE_YTEX));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
 				false,
