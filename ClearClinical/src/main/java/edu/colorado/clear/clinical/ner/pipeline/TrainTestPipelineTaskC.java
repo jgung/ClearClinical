@@ -42,7 +42,6 @@ import java.util.List;
 
 /**
  * This should correspond to Task 2a
- * @author ozborn
  *
  */
 public class TrainTestPipelineTaskC
@@ -50,8 +49,9 @@ public class TrainTestPipelineTaskC
 
 	public static String resourceDirPath = "src/main/resources/";
 
-	public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/task-c-train/subtask-c/data/train";
-	public static String semeval_devel_c = resourceDirPath + "semeval-2015-task-14/task-c-dev/subtask-c/data/devel";
+	public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/train";
+	public static String semeval_devel_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/devel";
+	public static String mini_devel_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/devel";
 
 	public static String abbrFile = resourceDirPath + "data/abbr.txt";
 	public static String cuiMapFile = resourceDirPath + "data/cuiMap.txt";
@@ -62,6 +62,8 @@ public class TrainTestPipelineTaskC
 
 	public static boolean SPAN_RESOLUTION = false;
 	public static boolean VERBOSE = false;
+	public static boolean USE_YTEX = false;
+	public static boolean SKIP_TRAINING = false;
 
 	public static void main(String... args) throws Throwable
 	{
@@ -78,8 +80,13 @@ public class TrainTestPipelineTaskC
 				trainExtension, true);
 		Collection<File> testFiles = FileUtils.listFiles(testDir,
 				trainExtension, true);
+		
+		for(String arg:args){
+			if(arg.equalsIgnoreCase("-ytex")) USE_YTEX=true;
+			if(arg.equalsIgnoreCase("-skiptraining")) SKIP_TRAINING=true;
+		}
 
-		train(trainFiles, crfModelDir, relModelDir, attModelDir);
+		if(!SKIP_TRAINING) train(trainFiles, crfModelDir, relModelDir, attModelDir);
 		AnnotationStatistics<String> stats = test(testFiles, crfModelDir, relModelDir, attModelDir);
 		System.out.println(stats);
 	}
@@ -93,6 +100,7 @@ public class TrainTestPipelineTaskC
 
 		AggregateBuilder builder = new AggregateBuilder();
 //		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+//		builder.add(ApplicationPipeline.getClearDefaultPipeline(USE_YTEX));
 		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015TaskCGoldAnnotator.class,
