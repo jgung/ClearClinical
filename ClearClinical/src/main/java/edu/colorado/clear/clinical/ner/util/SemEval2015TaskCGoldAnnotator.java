@@ -201,6 +201,8 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 				}
 				String ccNorm = fields[cc_norm];
 				String ccOffsets = fields[cc_cue];
+				//Hack to handle errors in training discharge task 2 data (03087-026480.pipe, 17644-017974.pipe,15230-012950.pipe )
+				if(ccOffsets.equals("nul") || ccOffsets.equals("unmarked")) ccOffsets="null";
 				if (!ccOffsets.equals("null"))
 				{
 					String[] offsets = ccOffsets.split("-");
