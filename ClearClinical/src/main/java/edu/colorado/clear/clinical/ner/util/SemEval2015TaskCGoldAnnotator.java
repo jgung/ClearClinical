@@ -1,13 +1,16 @@
 package edu.colorado.clear.clinical.ner.util;
 
 import edu.colorado.clear.clinical.ner.annotators.DisjointSpanAnnotator;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.typesystem.type.structured.DocumentID;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.cleartk.semeval2015.type.DiseaseDisorder;
 import org.cleartk.semeval2015.type.DiseaseDisorderAttribute;
 import org.cleartk.semeval2015.type.DisorderSpan;
 import org.uimafit.component.JCasAnnotator_ImplBase;
@@ -43,7 +46,10 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 	public static final int gc_cue = 16;
 	public static final int bl_norm = 17;
 	public static final int bl_cue = 18;
-	public static final int totalFields = 19;
+	public static final int dt_norm = 19;
+	public static final int te_norm = 20;
+	public static final int te_cue = 21;
+	public static final int totalFields = 22;
 	public static boolean VERBOSE = false;
 	public static HashMap<String, String> stringCUIMap;
 	@ConfigurationParameter(
@@ -114,6 +120,7 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 
 		List<List<DisorderSpan>> disjointSpans = new ArrayList<>();
 		List<DisorderSpan> usedSpans = new ArrayList<>();
+		List<DiseaseDisorderAttribute> diseaseAtts = new ArrayList<>();
 		String docId = "";
 
 		for (String line : pipedView.getDocumentText().split("\n"))
@@ -153,6 +160,7 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					if (disorder == null)
 					{
 						disorder = new DisorderSpan(jCas, begin, end);
+						//Should be using appView, need to copy in annotations to appView for testing
 						disorder.setChunk("");
 						disorder.setCui(cui);
 						disorder.addToIndexes(jCas);
@@ -160,7 +168,7 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					}
 					spans.add(disorder);
 					String disorderText = disorder.getCoveredText().trim().toLowerCase();
-					text += disorderText + " ";
+					text += disorderText + " "; //Used only for CUI map
 				}
 				text = text.trim();
 				if (training)
@@ -173,6 +181,21 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 				{
 					disjointSpans.add(spans);
 				}
+				//Set up disease
+				DiseaseDisorder disease = new DiseaseDisorder(jCas);
+				FSArray relSpans = new FSArray(jCas,spans.size());
+				//int min_begin=-1,max_end=-1;
+				for(int i=0;i<spans.size();i++){
+					DisorderSpan ds = spans.get(i);
+					//if(ds.getBegin()<min_begin || min_begin==-1) min_begin = ds.getBegin();
+					//if(ds.getEnd()>max_end ) max_end = ds.getEnd();
+					relSpans.set(i, ds); 
+				}
+				disease.setSpans(relSpans);
+				//disease.setBegin(min_begin);
+				//disease.setEnd(max_end);
+				disease.setCui(cui);
+				disease.addToIndexes(jCas);
 
 			/* Extract attributes */
 				String blNorm = fields[bl_norm];
@@ -184,8 +207,9 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					int end = Integer.parseInt(offsets[1]);
 					DiseaseDisorderAttribute bl = new DiseaseDisorderAttribute(jCas, begin, end);
 					bl.setNorm(blNorm);
-					bl.setAttributeType("bodyLocation");
+					bl.setAttributeType(SemEval2015Constants.BODY_RELATION);
 					bl.addToIndexes();
+					diseaseAtts.add(bl);
 				}
 				String coNorm = fields[co_norm];
 				String coOffsets = fields[co_cue];
@@ -196,8 +220,9 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					int end = Integer.parseInt(offsets[1]);
 					DiseaseDisorderAttribute co = new DiseaseDisorderAttribute(jCas, begin, end);
 					co.setNorm(coNorm);
-					co.setAttributeType("conditionalClass");
+					co.setAttributeType(SemEval2015Constants.CONDITIONAL_RELATION);
 					co.addToIndexes();
+					diseaseAtts.add(co);
 				}
 				String ccNorm = fields[cc_norm];
 				String ccOffsets = fields[cc_cue];
@@ -210,8 +235,9 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					int end = Integer.parseInt(offsets[1]);
 					DiseaseDisorderAttribute cc = new DiseaseDisorderAttribute(jCas, begin, end);
 					cc.setNorm(ccNorm);
-					cc.setAttributeType("courseClass");
+					cc.setAttributeType(SemEval2015Constants.COURSE_RELATION);
 					cc.addToIndexes();
+					diseaseAtts.add(cc);
 				}
 				String gcNorm = fields[gc_norm];
 				String gcOffsets = fields[gc_cue];
@@ -222,8 +248,9 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					int end = Integer.parseInt(offsets[1]);
 					DiseaseDisorderAttribute gc = new DiseaseDisorderAttribute(jCas, begin, end);
 					gc.setNorm(gcNorm);
-					gc.setAttributeType("genericClass");
+					gc.setAttributeType(SemEval2015Constants.GENERIC_RELATION);
 					gc.addToIndexes();
+					diseaseAtts.add(gc);
 				}
 				String niNorm = fields[ni_norm];
 				String niOffsets = fields[ni_cue];
@@ -234,8 +261,9 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					int end = Integer.parseInt(offsets[1]);
 					DiseaseDisorderAttribute ni = new DiseaseDisorderAttribute(jCas, begin, end);
 					ni.setNorm(niNorm);
-					ni.setAttributeType("negationIndicator");
+					ni.setAttributeType(SemEval2015Constants.NEGATION_RELATION);
 					ni.addToIndexes();
+					diseaseAtts.add(ni);
 				}
 				String svNorm = fields[sv_norm];
 				String svOffsets = fields[sv_cue];
@@ -246,8 +274,9 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					int end = Integer.parseInt(offsets[1]);
 					DiseaseDisorderAttribute sv = new DiseaseDisorderAttribute(jCas, begin, end);
 					sv.setNorm(svNorm);
-					sv.setAttributeType("severityClass");
+					sv.setAttributeType(SemEval2015Constants.SEVERITY_RELATION);
 					sv.addToIndexes();
+					diseaseAtts.add(sv);
 				}
 				String scNorm = fields[sc_norm];
 				String scOffsets = fields[sc_cue];
@@ -258,8 +287,9 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					int end = Integer.parseInt(offsets[1]);
 					DiseaseDisorderAttribute sc = new DiseaseDisorderAttribute(jCas, begin, end);
 					sc.setNorm(scNorm);
-					sc.setAttributeType("subjectClass");
+					sc.setAttributeType(SemEval2015Constants.SUBJECT_RELATION);
 					sc.addToIndexes();
+					diseaseAtts.add(sc);
 				}
 				String uiNorm = fields[ui_norm];
 				String uiOffsets = fields[ui_cue];
@@ -270,9 +300,41 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					int end = Integer.parseInt(offsets[1]);
 					DiseaseDisorderAttribute ui = new DiseaseDisorderAttribute(jCas, begin, end);
 					ui.setNorm(uiNorm);
-					ui.setAttributeType("uncertaintyIndicator");
+					ui.setAttributeType(SemEval2015Constants.UNCERTAINITY_RELATION);
 					ui.addToIndexes();
+					diseaseAtts.add(ui);
 				}
+				String dtNorm = fields[dt_norm];
+				if (!dtNorm.equals(SemEval2015Constants.defaultNorms.get(SemEval2015Constants.DOCTIME_RELATION)))
+				{
+					int begin = 1;
+					int end = jCas.getDocumentText().length()-1;
+					DiseaseDisorderAttribute dt = new DiseaseDisorderAttribute(jCas, begin, end);
+					dt.setNorm(dtNorm);
+					dt.setAttributeType(SemEval2015Constants.DOCTIME_RELATION);
+					dt.addToIndexes();
+					diseaseAtts.add(dt);
+				}
+				String teNorm = fields[te_norm];
+				String teOffsets = fields[te_cue];
+				if (!teOffsets.equals("null"))
+				{
+					String[] offsets = teOffsets.split("-");
+					int begin = Integer.parseInt(offsets[0]);
+					int end = Integer.parseInt(offsets[1]);
+					DiseaseDisorderAttribute te = new DiseaseDisorderAttribute(jCas, begin, end);
+					te.setNorm(teNorm);
+					te.setAttributeType(SemEval2015Constants.TEMPORAL_RELATION);
+					te.addToIndexes();
+					diseaseAtts.add(te);
+				}
+				
+				FSArray diseaseAttributes = new FSArray(jCas,diseaseAtts.size());
+				for(int i=0;i<diseaseAtts.size();i++){
+					diseaseAttributes.set(i,diseaseAtts.get(i));
+				}
+				disease.setAttributes(diseaseAttributes);
+				
 			} catch (NumberFormatException e)
 			{
 				System.out.println("Piped format error in line: " + line);

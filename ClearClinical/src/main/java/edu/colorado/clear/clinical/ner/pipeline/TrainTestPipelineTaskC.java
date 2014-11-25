@@ -6,6 +6,7 @@ import edu.colorado.clear.clinical.ner.annotators.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.SemEval2015TaskCGoldAnnotator;
+import edu.uab.ccts.nlp.uima.annotator.SemEval2015Task2Consumer;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory;
@@ -196,7 +197,7 @@ public class TrainTestPipelineTaskC
 				ViewTextCopierAnnotator.PARAM_DESTINATION_VIEW_NAME,
 				SemEval2015Constants.APP_VIEW));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
-				CopySentencesAndTokens.class));
+				CopySentencesAndTokensAnnotator.class));
 
 //		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 //				DisorderSpanAnnotator.class,
@@ -228,6 +229,10 @@ public class TrainTestPipelineTaskC
 					TrainTestPipeline.resourceDirPath + "cuis"));
 		}
 
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
+				SemEval2015Task2Consumer.PARAM_OUTPUT_DIRECTORY,
+				"template_results"));
+
 		AnnotationStatistics<String> stats = new AnnotationStatistics<>();
 		Function<DiseaseDisorderAttribute, ?> annotationToSpan = AnnotationStatistics.annotationToSpan();
 		Function<DiseaseDisorderAttribute, String> annotationToOutcome = AnnotationStatistics.annotationToFeatureValue("attributeType");
@@ -258,6 +263,7 @@ public class TrainTestPipelineTaskC
 			logger.setLevel(Level.OFF);
 	}
 
+	/*
 	public static class CopySentencesAndTokens extends JCasAnnotator_ImplBase
 	{
 		@Override
@@ -289,5 +295,6 @@ public class TrainTestPipelineTaskC
 			}
 		}
 	}
+	*/
 
 }

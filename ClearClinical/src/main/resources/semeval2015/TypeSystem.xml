@@ -7,5 +7,6 @@
 	<imports>
 		<import name="semeval2015.type.DisorderSpan"/>
 		<import name="semeval2015.type.DiseaseDisorderAttribute"/>
+		<import name="semeval2015.type.DiseaseDisorder"/>
 	</imports>
 </typeSystemDescription>
