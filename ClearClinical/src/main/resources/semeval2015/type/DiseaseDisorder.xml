@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<typeSystemDescription xmlns="http://uima.apache.org/resourceSpecifier">
+	<name>DisorderSpan</name>
+	<description></description>
+	<version></version>
+	<vendor></vendor>
+	<imports>
+		<import name="org.cleartk.score.type.TypeSystem"/>
+		<import name="org.apache.ctakes.typesystem.types.TypeSystem"/>
+	</imports>
+	<types>
+		<typeDescription>
+			<name>org.cleartk.semeval2015.type.DiseaseDisorder</name>
+			<description/>
+			<!-- <supertypeName>org.cleartk.score.type.ScoredAnnotation</supertypeName> -->
+			<supertypeName>org.apache.ctakes.typesystem.type.refsem.DiseaseDisorder</supertypeName>
+			<features>
+				<featureDescription>
+					<name>spans</name>
+					<description>List of DisorderSpans associated with this DiseaseDisorder</description>
+					<rangeTypeName>uima.cas.FSArray</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>attributes</name>
+					<description>List of DiseaseDisorderAttributes associated with this DiseaseDisorder</description>
+					<rangeTypeName>uima.cas.FSArray</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>stype</name>
+					<description>UMLS Semantic Type</description>
+					<rangeTypeName>uima.cas.String</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>cui</name>
+					<description></description>
+					<rangeTypeName>uima.cas.String</rangeTypeName>
+				</featureDescription>
+			</features>
+		</typeDescription>
+	</types>
+</typeSystemDescription>
