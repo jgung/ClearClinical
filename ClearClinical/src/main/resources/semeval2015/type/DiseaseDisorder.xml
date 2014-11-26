@@ -12,8 +12,8 @@
 		<typeDescription>
 			<name>org.cleartk.semeval2015.type.DiseaseDisorder</name>
 			<description/>
-			<!-- <supertypeName>org.cleartk.score.type.ScoredAnnotation</supertypeName> -->
-			<supertypeName>org.apache.ctakes.typesystem.type.refsem.DiseaseDisorder</supertypeName>
+			<supertypeName>org.cleartk.score.type.ScoredAnnotation</supertypeName> 
+			<!-- <supertypeName>org.apache.ctakes.typesystem.type.refsem.DiseaseDisorder</supertypeName> -->
 			<features>
 				<featureDescription>
 					<name>spans</name>
