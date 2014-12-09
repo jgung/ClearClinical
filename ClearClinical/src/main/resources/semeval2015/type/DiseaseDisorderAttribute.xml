@@ -28,6 +28,12 @@
 					<description></description>
 					<rangeTypeName>uima.cas.String</rangeTypeName>
 				</featureDescription>
+				<featureDescription>
+					<name>spans</name>
+					<description>List of DisorderSpans associated with this Attribute</description>
+					<rangeTypeName>uima.cas.FSArray</rangeTypeName>
+				</featureDescription>
+			
 			</features>
 		</typeDescription>
 	</types>

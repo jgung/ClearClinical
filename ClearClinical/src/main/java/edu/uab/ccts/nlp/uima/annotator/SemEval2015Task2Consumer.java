@@ -2,15 +2,9 @@ package edu.uab.ccts.nlp.uima.annotator;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.io.Writer;
-import java.util.List;
 
 import org.apache.ctakes.typesystem.type.structured.DocumentID;
-import org.apache.ctakes.typesystem.type.textsem.IdentifiedAnnotation;
-import org.apache.ctakes.ytex.uima.ApplicationContextHolder;
-import org.apache.ctakes.ytex.uima.dao.SegmentRegexDao;
-import org.apache.ctakes.ytex.uima.model.SegmentRegex;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -36,7 +30,7 @@ import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 	
 	public static String resourceDirPath = "src/main/resources/";
-	public static boolean VERBOSE=true;
+	public static boolean VERBOSE=false;
 
 	public static final String PARAM_OUTPUT_DIRECTORY = "outputDir";
 	@ConfigurationParameter(
@@ -73,25 +67,22 @@ public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 		for(DocumentID di : JCasUtil.select(goldView, DocumentID.class)) {
 			docid = di.getDocumentID(); break;
 		}
-		for(DiseaseDisorder ds : JCasUtil.select(goldView, DiseaseDisorder.class)) {
-			String results = getDiseaseDisorderSemEval2015Format(aJCas, docid, ds);
-			if(VERBOSE) System.out.println(results);
-			try {
-				String filepath = outputDir+File.separator+
-			    docid.substring(0,docid.length()-4)+".pipe";
-				System.out.println("FILEPATH IS:"+filepath);
-				Writer writer = new FileWriter(filepath);
-				//File file = new File(filepath);
-				//PrintWriter writer = new PrintWriter(filepath,"UTF-8");
-				writer.write(results);
-				writer.close();
-			} catch (Exception e) { e.printStackTrace(); }
-
-		}
+		String filepath = outputDir+File.separator+
+	    docid.substring(0,docid.length()-4)+"pipe";
+		try {
+			Writer writer = new FileWriter(filepath);
+			for(DiseaseDisorder ds : JCasUtil.select(goldView, DiseaseDisorder.class)) {
+				String results = getDiseaseDisorderSemEval2015Format(aJCas, docid, ds);
+				if(VERBOSE) System.out.println(results);
+				writer.write(results+"\n");
+			}
+			writer.close();
+		} catch (Exception e) { e.printStackTrace(); }
 	}
 	
 	
-	
+
+	/** FIXME Need to handle multiple lines */
 	private String getDiseaseDisorderSemEval2015Format(JCas jcas, String docid, DiseaseDisorder dd) {
 		StringBuffer output_lines = new StringBuffer(2000);
 		output_lines.append(docid);
@@ -114,8 +105,8 @@ public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 		output_lines.append(fetchAttributeString(atts, SemEval2015Constants.CONDITIONAL_RELATION));
 		output_lines.append(fetchAttributeString(atts, SemEval2015Constants.GENERIC_RELATION));
 		output_lines.append(fetchAttributeString(atts, SemEval2015Constants.BODY_RELATION));
-		output_lines.append(fetchAttributeString(atts, SemEval2015Constants.DOCTIME_RELATION));
-		output_lines.append(fetchAttributeString(atts, SemEval2015Constants.TEMPORAL_RELATION));
+		//output_lines.append(fetchAttributeString(atts, SemEval2015Constants.DOCTIME_RELATION));
+		//output_lines.append(fetchAttributeString(atts, SemEval2015Constants.TEMPORAL_RELATION));
 		return output_lines.toString();
 	}
 	
@@ -130,9 +121,21 @@ public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 				if(type.equals(dda.getAttributeType())) {
 					norm = dda.getNorm();
 					if(!type.equals(SemEval2015Constants.DOCTIME_RELATION)) {
-						cue = (dda.getBegin()+"-"+dda.getEnd());
-						return norm + SemEval2015Constants.OUTPUT_SEPERATOR+cue
-						+SemEval2015Constants.OUTPUT_SEPERATOR;
+						FSArray attspans = dda.getSpans();
+						if(attspans==null){
+							System.out.println(dda.getBegin()+" to "+dda.getEnd()+" has no atts!!!!");
+							continue;
+						}
+						for(int j=0;j<attspans.size();j++){
+							DisorderSpan ds = (DisorderSpan) attspans.get(j);
+							if(j==0) cue = (ds.getBegin()+"-"+ds.getEnd());
+							else {
+								cue = cue+","+ ds.getBegin()+"-"+ds.getEnd();
+							}
+						}
+						String out = norm + SemEval2015Constants.OUTPUT_SEPERATOR+cue;
+						if(type.equals(SemEval2015Constants.BODY_RELATION)) out +=  SemEval2015Constants.OUTPUT_SEPERATOR;
+						return out;
 					} else {
 						return norm + SemEval2015Constants.OUTPUT_SEPERATOR;
 					}
@@ -151,7 +154,7 @@ public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 			return AnalysisEngineFactory.createPrimitiveDescription(
 						        SemEval2015Task2Consumer.class,
 						        SemEval2015Task2Consumer.PARAM_OUTPUT_DIRECTORY,
-						        resourceDirPath+"semeval-2015-task-14/subtask-c/data");
+						        resourceDirPath+"semeval-2015-task-14/data");
 	}
 
 }

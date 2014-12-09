@@ -49,7 +49,7 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 	public static final int dt_norm = 19;
 	public static final int te_norm = 20;
 	public static final int te_cue = 21;
-	public static final int totalFields = 22;
+	public static final int totalFields = SemEval2015Constants.TOTAL_FIELDS;
 	public static boolean VERBOSE = false;
 	public static HashMap<String, String> stringCUIMap;
 	@ConfigurationParameter(
@@ -105,6 +105,8 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 			stringCUIMap = getMap(new File(cuiMap));
 	}
 
+
+	@SuppressWarnings("unused")
 	public void process(JCas jCas) throws AnalysisEngineProcessException
 	{
 
@@ -118,14 +120,16 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 			System.exit(0);
 		}
 
-		List<List<DisorderSpan>> disjointSpans = new ArrayList<>();
 		List<DisorderSpan> usedSpans = new ArrayList<>();
-		List<DiseaseDisorderAttribute> diseaseAtts = new ArrayList<>();
+		List<DisorderSpan> prevSpans = new ArrayList<>();
+		DiseaseDisorder prev_disease = null;
+   		List<List<DisorderSpan>> disjointSpans = new ArrayList<>();
 		String docId = "";
 
 		for (String line : pipedView.getDocumentText().split("\n"))
 		{
 
+    		List<DiseaseDisorderAttribute> diseaseAtts = new ArrayList<>();
 			String[] fields = line.split("\\|");
 			if (fields.length < totalFields)
 			{
@@ -140,8 +144,6 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 			String text = "";
 			try
 			{
-
-
 				for (String ddSpan : ddSpans)
 				{
 					String[] startBegin = ddSpan.split("-");
@@ -177,53 +179,120 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					text = text.replaceAll("\\s+", " ");
 					stringCUIMap.put(text, cui);
 				}
+
+				//Determine if we have seen this disease before
+				//Required to handle situation where next line is NOT a new disease but an additional anatomical mapping
+				
+				/*
+				boolean seen_before = true;
+				for(int i=0;i<spans.size();i++){
+					DisorderSpan cur = spans.get(i);
+					if(prevSpans==null || !spanSeenBefore(cur,prevSpans)){
+						seen_before = false;
+						break;
+					}
+				}
+				if(seen_before) {
+					System.out.println(docId+" seen before!"+line); System.out.flush();
+					List<DiseaseDisorderAttribute> temp = new ArrayList<DiseaseDisorderAttribute>();
+					DiseaseDisorderAttribute prevbody = null;
+					DiseaseDisorderAttribute prevcourse = null;
+					DiseaseDisorderAttribute prevsubject = null;
+					FSArray prevatts = prev_disease.getAttributes();
+					for (int i=0;i<prevatts.size();i++){
+						DiseaseDisorderAttribute cur = (DiseaseDisorderAttribute) prevatts.get(i);
+						if(cur.getAttributeType().equals(SemEval2015Constants.BODY_RELATION)){
+							prevbody = cur;
+						} else if(cur.getAttributeType().equals(SemEval2015Constants.COURSE_RELATION)){
+							prevcourse = cur;
+						} else if(cur.getAttributeType().equals(SemEval2015Constants.SUBJECT_RELATION)){
+							prevsubject = cur;
+						}
+					}
+					while(temp.size()==0) {
+						extractAttribute(jCas, temp, fields,
+								bl_norm,bl_cue,SemEval2015Constants.BODY_RELATION);			
+						if(temp.size()!=0 && prevbody!=null){
+							DiseaseDisorderAttribute bodytest = temp.get(0);
+							if(bodytest.getBegin()!=prevbody.getBegin()||
+									bodytest.getEnd()!=prevbody.getEnd()) { 
+								System.out.println("Same disease, different body location");
+								break;
+							}
+						}
+						extractAttribute(jCas, temp, fields,
+								cc_norm,cc_cue,SemEval2015Constants.COURSE_RELATION);			
+						if(temp.size()!=0 && prevcourse!=null){
+							DiseaseDisorderAttribute coursetest = temp.get(0);
+							if(coursetest.getBegin()!=prevcourse.getBegin()||
+									coursetest.getEnd()!=prevcourse.getEnd()) { 
+								System.out.println("Difference is course!");
+								break;
+							}
+						}
+						extractAttribute(jCas, temp, fields,
+								sc_norm,sc_cue,SemEval2015Constants.SUBJECT_RELATION);			
+						if(temp.size()!=0 && prevsubject!=null){
+							DiseaseDisorderAttribute subjecttest = temp.get(0);
+							if(subjecttest.getBegin()!=prevsubject.getBegin()||
+									subjecttest.getEnd()!=prevsubject.getEnd()) { 
+								System.out.println("Same disease, different subject!");
+								break;
+							}
+						}
+						System.out.println("Failed to find diff...");
+						System.exit(0);
+					}
+					FSArray joineddiseaseAttributes = new FSArray(jCas,prev_disease.getAttributes().size()+1);
+					FSArray prevdiseaseAttributes = prev_disease.getAttributes();
+					for(int j=0;j<prevdiseaseAttributes.size();j++){
+						joineddiseaseAttributes.set(j,prevdiseaseAttributes.get(j));
+					}
+					joineddiseaseAttributes.set(prev_disease.getAttributes().size(),temp.remove(0));
+					prev_disease.setAttributes(joineddiseaseAttributes);
+				}
+				*/
+				
+				
 				if (spans.size() > 1) /* multi-span disorder */
 				{
 					disjointSpans.add(spans);
 				}
+
 				//Set up disease
 				DiseaseDisorder disease = new DiseaseDisorder(jCas);
 				FSArray relSpans = new FSArray(jCas,spans.size());
-				//int min_begin=-1,max_end=-1;
+				int min_begin=-1,max_end=-1;
 				for(int i=0;i<spans.size();i++){
 					DisorderSpan ds = spans.get(i);
-					//if(ds.getBegin()<min_begin || min_begin==-1) min_begin = ds.getBegin();
-					//if(ds.getEnd()>max_end ) max_end = ds.getEnd();
+					if(ds.getBegin()<min_begin || min_begin==-1) min_begin = ds.getBegin();
+					if(ds.getEnd()>max_end ) max_end = ds.getEnd();
 					relSpans.set(i, ds); 
 				}
 				disease.setSpans(relSpans);
-				//disease.setBegin(min_begin);
-				//disease.setEnd(max_end);
+				disease.setBegin(min_begin);
+				disease.setEnd(max_end);
 				disease.setCui(cui);
 				disease.addToIndexes(jCas);
 
-			/* Extract attributes */
-				String blNorm = fields[bl_norm];
-				String blOffsets = fields[bl_cue];
-				if (!blOffsets.equals("null"))
-				{
-					String[] offsets = blOffsets.split("-");
-					int begin = Integer.parseInt(offsets[0]);
-					int end = Integer.parseInt(offsets[1]);
-					DiseaseDisorderAttribute bl = new DiseaseDisorderAttribute(jCas, begin, end);
-					bl.setNorm(blNorm);
-					bl.setAttributeType(SemEval2015Constants.BODY_RELATION);
-					bl.addToIndexes();
-					diseaseAtts.add(bl);
-				}
-				String coNorm = fields[co_norm];
-				String coOffsets = fields[co_cue];
-				if (!coOffsets.equals("null"))
-				{
-					String[] offsets = coOffsets.split("-");
-					int begin = Integer.parseInt(offsets[0]);
-					int end = Integer.parseInt(offsets[1]);
-					DiseaseDisorderAttribute co = new DiseaseDisorderAttribute(jCas, begin, end);
-					co.setNorm(coNorm);
-					co.setAttributeType(SemEval2015Constants.CONDITIONAL_RELATION);
-					co.addToIndexes();
-					diseaseAtts.add(co);
-				}
+				/* Extract attributes */
+				extractAttribute(jCas, diseaseAtts, fields,
+						bl_norm,bl_cue,SemEval2015Constants.BODY_RELATION);
+				extractAttribute(jCas, diseaseAtts, fields,
+						co_norm,co_cue,SemEval2015Constants.CONDITIONAL_RELATION);
+				extractAttribute(jCas, diseaseAtts, fields,
+						gc_norm,gc_cue,SemEval2015Constants.GENERIC_RELATION);
+				extractAttribute(jCas, diseaseAtts, fields,
+						ni_norm,ni_cue,SemEval2015Constants.NEGATION_RELATION);
+				extractAttribute(jCas, diseaseAtts, fields,
+						sv_norm,sv_cue,SemEval2015Constants.SEVERITY_RELATION);
+				extractAttribute(jCas, diseaseAtts, fields,
+						sc_norm,sc_cue,SemEval2015Constants.SUBJECT_RELATION);
+				extractAttribute(jCas, diseaseAtts, fields,
+						ui_norm,ui_cue,SemEval2015Constants.UNCERTAINITY_RELATION);
+				extractAttribute(jCas, diseaseAtts, fields,
+						cc_norm,cc_cue,SemEval2015Constants.COURSE_RELATION);
+				/*
 				String ccNorm = fields[cc_norm];
 				String ccOffsets = fields[cc_cue];
 				//Hack to handle errors in training discharge task 2 data (03087-026480.pipe, 17644-017974.pipe,15230-012950.pipe )
@@ -239,102 +308,33 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 					cc.addToIndexes();
 					diseaseAtts.add(cc);
 				}
-				String gcNorm = fields[gc_norm];
-				String gcOffsets = fields[gc_cue];
-				if (!gcOffsets.equals("null"))
-				{
-					String[] offsets = gcOffsets.split("-");
-					int begin = Integer.parseInt(offsets[0]);
-					int end = Integer.parseInt(offsets[1]);
-					DiseaseDisorderAttribute gc = new DiseaseDisorderAttribute(jCas, begin, end);
-					gc.setNorm(gcNorm);
-					gc.setAttributeType(SemEval2015Constants.GENERIC_RELATION);
-					gc.addToIndexes();
-					diseaseAtts.add(gc);
-				}
-				String niNorm = fields[ni_norm];
-				String niOffsets = fields[ni_cue];
-				if (!niOffsets.equals("null"))
-				{
-					String[] offsets = niOffsets.split("-");
-					int begin = Integer.parseInt(offsets[0]);
-					int end = Integer.parseInt(offsets[1]);
-					DiseaseDisorderAttribute ni = new DiseaseDisorderAttribute(jCas, begin, end);
-					ni.setNorm(niNorm);
-					ni.setAttributeType(SemEval2015Constants.NEGATION_RELATION);
-					ni.addToIndexes();
-					diseaseAtts.add(ni);
-				}
-				String svNorm = fields[sv_norm];
-				String svOffsets = fields[sv_cue];
-				if (!svOffsets.equals("null"))
-				{
-					String[] offsets = svOffsets.split("-");
-					int begin = Integer.parseInt(offsets[0]);
-					int end = Integer.parseInt(offsets[1]);
-					DiseaseDisorderAttribute sv = new DiseaseDisorderAttribute(jCas, begin, end);
-					sv.setNorm(svNorm);
-					sv.setAttributeType(SemEval2015Constants.SEVERITY_RELATION);
-					sv.addToIndexes();
-					diseaseAtts.add(sv);
-				}
-				String scNorm = fields[sc_norm];
-				String scOffsets = fields[sc_cue];
-				if (!scOffsets.equals("null"))
-				{
-					String[] offsets = scOffsets.split("-");
-					int begin = Integer.parseInt(offsets[0]);
-					int end = Integer.parseInt(offsets[1]);
-					DiseaseDisorderAttribute sc = new DiseaseDisorderAttribute(jCas, begin, end);
-					sc.setNorm(scNorm);
-					sc.setAttributeType(SemEval2015Constants.SUBJECT_RELATION);
-					sc.addToIndexes();
-					diseaseAtts.add(sc);
-				}
-				String uiNorm = fields[ui_norm];
-				String uiOffsets = fields[ui_cue];
-				if (!uiOffsets.equals("null"))
-				{
-					String[] offsets = uiOffsets.split("-");
-					int begin = Integer.parseInt(offsets[0]);
-					int end = Integer.parseInt(offsets[1]);
-					DiseaseDisorderAttribute ui = new DiseaseDisorderAttribute(jCas, begin, end);
-					ui.setNorm(uiNorm);
-					ui.setAttributeType(SemEval2015Constants.UNCERTAINITY_RELATION);
-					ui.addToIndexes();
-					diseaseAtts.add(ui);
-				}
-				String dtNorm = fields[dt_norm];
-				if (!dtNorm.equals(SemEval2015Constants.defaultNorms.get(SemEval2015Constants.DOCTIME_RELATION)))
-				{
-					int begin = 1;
-					int end = jCas.getDocumentText().length()-1;
-					DiseaseDisorderAttribute dt = new DiseaseDisorderAttribute(jCas, begin, end);
-					dt.setNorm(dtNorm);
-					dt.setAttributeType(SemEval2015Constants.DOCTIME_RELATION);
-					dt.addToIndexes();
-					diseaseAtts.add(dt);
-				}
-				String teNorm = fields[te_norm];
-				String teOffsets = fields[te_cue];
-				if (!teOffsets.equals("null"))
-				{
-					String[] offsets = teOffsets.split("-");
-					int begin = Integer.parseInt(offsets[0]);
-					int end = Integer.parseInt(offsets[1]);
-					DiseaseDisorderAttribute te = new DiseaseDisorderAttribute(jCas, begin, end);
-					te.setNorm(teNorm);
-					te.setAttributeType(SemEval2015Constants.TEMPORAL_RELATION);
-					te.addToIndexes();
-					diseaseAtts.add(te);
-				}
+				*/
 				
+				if(totalFields>19) {
+					extractAttribute(jCas, diseaseAtts, fields,
+						te_norm,te_cue,SemEval2015Constants.TEMPORAL_RELATION);
+					String dtNorm = fields[dt_norm];
+					if (!dtNorm.equals(SemEval2015Constants.defaultNorms.get(SemEval2015Constants.DOCTIME_RELATION)))
+					{
+						int begin = 1;
+						int end = jCas.getDocumentText().length()-1;
+						DiseaseDisorderAttribute dt = new DiseaseDisorderAttribute(jCas, begin, end);
+						dt.setNorm(dtNorm);
+						dt.setAttributeType(SemEval2015Constants.DOCTIME_RELATION);
+						dt.addToIndexes();
+						diseaseAtts.add(dt);
+					}
+				}
+
 				FSArray diseaseAttributes = new FSArray(jCas,diseaseAtts.size());
 				for(int i=0;i<diseaseAtts.size();i++){
 					diseaseAttributes.set(i,diseaseAtts.get(i));
 				}
 				disease.setAttributes(diseaseAttributes);
-				
+				//System.out.println("Disease ("+fields[1]+") in "+fields[0]+" set "+diseaseAttributes.size()+" attributes.");
+				prevSpans = spans;
+				prev_disease = disease;
+
 			} catch (NumberFormatException e)
 			{
 				System.out.println("Piped format error in line: " + line);
@@ -357,6 +357,53 @@ public class SemEval2015TaskCGoldAnnotator extends JCasAnnotator_ImplBase
 		DocumentID id = new DocumentID(jCas);
 		id.setDocumentID(docId);
 		id.addToIndexes();
+	}
+
+
+
+	private void extractAttribute(JCas jCas,
+			List<DiseaseDisorderAttribute> dAtts, String[] fields,
+			int input_norm, int input_cue, String relation) {
+		String blNorm = fields[input_norm];
+		String blOffsets = fields[input_cue];
+		if (!blOffsets.equals("null"))
+		{
+			DiseaseDisorderAttribute bl = new DiseaseDisorderAttribute(jCas);
+			String[] commasplit = blOffsets.split(",");
+			FSArray attspans = new FSArray(jCas,commasplit.length);
+			for(int i=0;i<commasplit.length;i++){
+				String[] offsets = commasplit[i].split("-");
+				int begin = Integer.parseInt(offsets[0]);
+				int end = Integer.parseInt(offsets[1]);
+				if(i==0)bl.setBegin(begin);
+				bl.setEnd(end);
+				DisorderSpan ds = new DisorderSpan(jCas, begin, end);
+				attspans.set(i, ds);
+			}
+			bl.setNorm(blNorm);
+			bl.setAttributeType(relation);
+			bl.setSpans(attspans);
+			bl.addToIndexes();
+			dAtts.add(bl);
+		} 
+	}
+
+
+	/**
+	 * Determine if span ds is present in prevSpans, if yes, return true
+	 * @param ds
+	 * @param prevSpans
+	 * @return
+	 */
+	private boolean spanSeenBefore(DisorderSpan ds, List<DisorderSpan> prevSpans){
+		for(int j=0;j<prevSpans.size();j++){
+			DisorderSpan old = prevSpans.get(j);
+			if(ds.getBegin()==old.getBegin() && ds.getEnd()==old.getEnd()) {
+				System.out.println("See before:"+ds.getBegin()+"-"+ds.getEnd());
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

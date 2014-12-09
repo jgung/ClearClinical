@@ -12,6 +12,7 @@ public class SemEval2015Constants
 	public static final String GOLD_VIEW = CAS.NAME_DEFAULT_SOFA;
 
 	public static final String OUTPUT_SEPERATOR = "|";
+	public static final int TOTAL_FIELDS = 19; //22 in previous version
 
 	public static final String NEGATION_RELATION = "negationIndicator";
 	public static final String SUBJECT_RELATION = "subjectClass";
