@@ -6,6 +6,7 @@ import edu.colorado.clear.clinical.ner.annotators.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.SemEval2015TaskCGoldAnnotator;
+import edu.uab.ccts.nlp.uima.annotator.MutualInformationAnnotator;
 import edu.uab.ccts.nlp.uima.annotator.SemEval2015Task2Consumer;
 
 import org.apache.commons.io.FileUtils;
@@ -227,6 +228,11 @@ public class TrainTestPipelineTaskC
 					TrainTestPipeline.resourceDirPath + "cuis"));
 		}
 
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(MutualInformationAnnotator.class,
+				MutualInformationAnnotator.PARAM_MI_DATABASE_URL,
+				SemEval2015Constants.default_db_url,
+				MutualInformationAnnotator.PARAM_IS_TRAINING,
+				true));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
 				SemEval2015Task2Consumer.PARAM_OUTPUT_DIRECTORY,
 				"template_results"));

@@ -39,5 +39,7 @@ public class SemEval2015Constants
 		defaultNorms.put(DOCTIME_RELATION, "unknown");
 		defaultNorms.put(TEMPORAL_RELATION, "none");
 	}
+	
+	public static String default_db_url = "fake_url"; //FIXME with publicly distributed database
 
 }
