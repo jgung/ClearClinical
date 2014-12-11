@@ -231,6 +231,10 @@ public class TrainTestPipelineTaskC
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(MutualInformationAnnotator.class,
 				MutualInformationAnnotator.PARAM_MI_DATABASE_URL,
 				SemEval2015Constants.default_db_url,
+				MutualInformationAnnotator.PARAM_MI_DATABASE_USER,
+				SemEval2015Constants.default_db_user,
+				MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
+				SemEval2015Constants.default_db_url,
 				MutualInformationAnnotator.PARAM_IS_TRAINING,
 				true));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,

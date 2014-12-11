@@ -40,6 +40,7 @@ public class SemEval2015Constants
 		defaultNorms.put(TEMPORAL_RELATION, "none");
 	}
 	
-	public static String default_db_url = "fake_url"; //FIXME with publicly distributed database
-
+	public static final String default_db_url = "jdbc:hsqldb:hsql://localhost/mutinf";
+	public static final String default_db_user = "SA";
+	public static final String default_db_password = "";
 }
