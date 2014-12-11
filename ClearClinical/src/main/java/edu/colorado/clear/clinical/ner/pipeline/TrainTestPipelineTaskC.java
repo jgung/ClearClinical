@@ -23,6 +23,7 @@ import org.cleartk.classifier.jar.*;
 import org.cleartk.classifier.libsvm.LIBSVMBooleanOutcomeDataWriter;
 import org.cleartk.eval.AnnotationStatistics;
 import org.cleartk.semeval2015.type.DiseaseDisorderAttribute;
+import org.hsqldb.server.Server;
 import org.uimafit.component.ViewCreatorAnnotator;
 import org.uimafit.component.ViewTextCopierAnnotator;
 import org.uimafit.factory.AggregateBuilder;
@@ -230,11 +231,11 @@ public class TrainTestPipelineTaskC
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(MutualInformationAnnotator.class,
 				MutualInformationAnnotator.PARAM_MI_DATABASE_URL,
-				SemEval2015Constants.default_db_url,
+				MutualInformationAnnotator.default_db_url,
 				MutualInformationAnnotator.PARAM_MI_DATABASE_USER,
-				SemEval2015Constants.default_db_user,
+				MutualInformationAnnotator.default_db_user,
 				MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
-				SemEval2015Constants.default_db_url,
+				MutualInformationAnnotator.default_db_url,
 				MutualInformationAnnotator.PARAM_IS_TRAINING,
 				true));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
@@ -246,6 +247,13 @@ public class TrainTestPipelineTaskC
 		Function<DiseaseDisorderAttribute, String> annotationToOutcome = AnnotationStatistics.annotationToFeatureValue("attributeType");
 
 		if (!VERBOSE) suppressLogging();
+		
+		System.out.println("Attempting to create embedded database");
+		Server hsqlServer = new Server();
+		hsqlServer.setDatabaseName(0, "mutinf");
+		hsqlServer.setDatabasePath(0, "file:"+MutualInformationAnnotator.default_db_path);
+		hsqlServer.start();
+		MutualInformationAnnotator.initialize_database();
 
 		for (JCas jCas : new JCasIterable(reader, builder.createAggregate()))
 		{
@@ -257,6 +265,7 @@ public class TrainTestPipelineTaskC
 
 			stats.add(goldSpans, systemSpans, annotationToSpan, annotationToOutcome);
 		}
+		hsqlServer.stop();
 
 		return stats;
 
