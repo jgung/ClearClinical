@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<typeSystemDescription xmlns="http://uima.apache.org/resourceSpecifier">
+	<name>TokenMutualInformation</name>
+	<description></description>
+	<version></version>
+	<vendor></vendor>
+	<imports>
+		<import name="org.cleartk.score.type.TypeSystem"/>
+	</imports>
+	<types>
+		<typeDescription>
+			<name>org.cleartk.semeval2015.type.TokenMutualInformation</name>
+			<description/>
+			<supertypeName>org.cleartk.score.type.ScoredAnnotation</supertypeName>
+			<features>
+				<featureDescription>
+					<name>annotation_x</name>
+					<description/>
+					<rangeTypeName>uima.tcas.Annotation</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>annotation_y</name>
+					<description/>
+					<rangeTypeName>uima.tcas.Annotation</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>count_x</name>
+					<description/>
+					<rangeTypeName>uima.cas.Integer</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>count_y</name>
+					<description/>
+					<rangeTypeName>uima.cas.Integer</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>count_xy</name>
+					<description></description>
+					<rangeTypeName>uima.cas.Integer</rangeTypeName>
+				</featureDescription>
+				<featureDescription>
+					<name>mi</name>
+					<description>Mutual Information</description>
+					<rangeTypeName>uima.cas.Double</rangeTypeName>
+				</featureDescription>
+			</features>
+		</typeDescription>
+	</types>
+</typeSystemDescription>
