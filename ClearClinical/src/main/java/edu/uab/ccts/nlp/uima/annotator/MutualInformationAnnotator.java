@@ -180,12 +180,24 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 				while(resultset.next()){
 					global_observed_bigrams = resultset.getInt(1);
 				}
+				Integer all_unigram_count = getTokenCounts(_dbConnection, "NLP_UNIGRAM");
+				Integer all_bigram_count = getTokenCounts(_dbConnection, "NLP_BIGRAM");
 				
-				//FIXME populate tkmi
 				for(String first : bigram_counts.keySet()){
 				Hashtable<String,Integer> thecounts = bigram_counts.get(first);
+				Integer first_count = unigram_counts.get(first);
 					for(String second : thecounts.keySet()){
+						Integer second_count = unigram_counts.get(first);
 						TokenMutualInformation tkmi = new TokenMutualInformation(appView);
+						tkmi.setAnnotation_x(first);
+						tkmi.setAnnotation_y(second);
+						tkmi.setCount_x(first_count);
+						tkmi.setCount_y(second_count);
+						Integer jointcount = thecounts.get(second);
+						tkmi.setCount_xy(jointcount);
+						double mi = (((double)first_count/all_unigram_count)*((double)second_count/all_unigram_count))/((double)jointcount/all_bigram_count);
+						tkmi.setMi(mi);
+						tkmi.addToIndexes();
 					}
 				}
 				_dbConnection.close();
@@ -201,7 +213,8 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 	}
 	private void getTokenCounts(JCas appView,
 			Hashtable<String, Integer> unigram_counts,
-			Hashtable<String, Hashtable<String, Integer>> bigram_counts) {
+			Hashtable<String, Hashtable<String, Integer>> bigram_counts
+		) {
 		String cur_cover=null,prev_cover="___DOCUMENT_START___";
 		for(BaseToken tok : JCasUtil.select(appView, BaseToken.class)) {	
 			cur_cover = tok.getCoveredText();
@@ -224,6 +237,23 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			prev_cover = cur_cover;
 		}
 	}
+
+	
+	private int getTokenCounts(Connection conn, String table_name){
+		Integer count = 0;
+		try {
+			String ucountsql = "SELECT SUM(OBSERVED) FROM "+table_name;
+			Statement st = conn.createStatement();
+			ResultSet resultset = (ResultSet) st.executeQuery(ucountsql);
+			while(resultset.next()){
+				count = resultset.getInt(1);
+			}
+			resultset.close();
+		} catch (Exception e) { e.printStackTrace(); }
+		return count;
+	}
+
+	
 
 	public static void initialize_database() {
 		try {

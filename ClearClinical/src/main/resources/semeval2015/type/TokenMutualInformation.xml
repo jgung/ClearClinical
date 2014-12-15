@@ -16,12 +16,12 @@
 				<featureDescription>
 					<name>annotation_x</name>
 					<description/>
-					<rangeTypeName>uima.tcas.Annotation</rangeTypeName>
+					<rangeTypeName>uima.cas.String</rangeTypeName>
 				</featureDescription>
 				<featureDescription>
 					<name>annotation_y</name>
 					<description/>
-					<rangeTypeName>uima.tcas.Annotation</rangeTypeName>
+					<rangeTypeName>uima.cas.String</rangeTypeName>
 				</featureDescription>
 				<featureDescription>
 					<name>count_x</name>
