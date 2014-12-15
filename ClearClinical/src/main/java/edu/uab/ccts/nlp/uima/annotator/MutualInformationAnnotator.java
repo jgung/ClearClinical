@@ -186,12 +186,17 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			try {
 				_dbConnection = DriverManager.getConnection(miDatabaseUrl, miDatabaseUser, miDatabasePassword);
 				Statement st = _dbConnection.createStatement();
-				String query ="SELECT COUNT(*) FROM NLP_UNIGRAM";
+				String query ="SELECT SUM(OBSERVED) FROM NLP_UNIGRAM";
 				resultset = (ResultSet) st.executeQuery(query);
 				while(resultset.next()){
-					global_distinct_unigrams = resultset.getInt(1);
+					global_observed_unigrams = resultset.getInt(1);
 				}
 				resultset.close();
+				query ="SELECT SUM(OBSERVED) FROM NLP_BIGRAM";
+				resultset = (ResultSet) st.executeQuery(query);
+				while(resultset.next()){
+					global_observed_bigrams = resultset.getInt(1);
+				}
 				_dbConnection.close();
 
 			} catch (Exception e)
