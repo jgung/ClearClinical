@@ -8,5 +8,6 @@
 		<import name="semeval2015.type.DisorderSpan"/>
 		<import name="semeval2015.type.DiseaseDisorderAttribute"/>
 		<import name="semeval2015.type.DiseaseDisorder"/>
+		<import name="semeval2015.type.TokenMutualInformation"/>
 	</imports>
 </typeSystemDescription>

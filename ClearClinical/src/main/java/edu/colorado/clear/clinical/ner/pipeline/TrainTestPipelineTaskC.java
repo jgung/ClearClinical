@@ -130,6 +130,20 @@ public class TrainTestPipelineTaskC
 				attModelDir.getPath(),
 				DefaultSequenceDataWriterFactory.PARAM_DATA_WRITER_CLASS_NAME,
 				CRFSuiteStringOutcomeDataWriter.class));
+		
+		
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(MutualInformationAnnotator.class,
+				MutualInformationAnnotator.PARAM_MI_DATABASE_URL,
+				MutualInformationAnnotator.default_db_url,
+				MutualInformationAnnotator.PARAM_MI_DATABASE_USER,
+				MutualInformationAnnotator.default_db_user,
+				MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
+				MutualInformationAnnotator.default_db_url,
+				MutualInformationAnnotator.PARAM_IS_TRAINING,
+				true));
+
+		
+		
 
 		if (SPAN_RESOLUTION)
 		{
@@ -237,7 +251,7 @@ public class TrainTestPipelineTaskC
 				MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
 				MutualInformationAnnotator.default_db_url,
 				MutualInformationAnnotator.PARAM_IS_TRAINING,
-				true));
+				false));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
 				SemEval2015Task2Consumer.PARAM_OUTPUT_DIRECTORY,
 				"template_results"));

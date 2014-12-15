@@ -9,7 +9,6 @@ import java.util.Hashtable;
 
 import org.apache.ctakes.typesystem.type.structured.DocumentID;
 import org.apache.ctakes.typesystem.type.syntax.BaseToken;
-import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;
@@ -20,6 +19,7 @@ import org.uimafit.component.JCasAnnotator_ImplBase;
 import org.uimafit.descriptor.ConfigurationParameter;
 import org.uimafit.factory.AnalysisEngineFactory;
 import org.uimafit.util.JCasUtil;
+import org.cleartk.semeval2015.type.TokenMutualInformation;
 
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 
@@ -30,20 +30,20 @@ import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
  */
 public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 
-
-	//public static final String default_db_url = "jdbc:hsqldb:hsql://localhost/mutinf";
-	public static final String default_db_name = "mutinf";
+	public static final String default_db_name = "unsup";
 	public static final String default_db_path = "src/main/resources/hsqldb/"+default_db_name;
 	public static final String default_db_url = "jdbc:hsqldb:file:"+default_db_path;
 	public static final String default_db_user = "SA";
 	public static final String default_db_password = "";
+	public static final String default_unsupervised_corpus = "src/main/resources/"+
+	"semeval-2014-unlabelled-mimic-notes.v1";
 
 	public static final String unigram_table_create = 
 			"CREATE TABLE NLP_UNIGRAM ( "+
 					"DOCID VARCHAR(40) NOT NULL "+
-					", TOKEN VARCHAR(100) NOT NULL "+ 
+					", MI_TOKEN VARCHAR(100) NOT NULL "+ 
 					", OBSERVED INT DEFAULT 0 , "+
-					" PRIMARY KEY(docid,token) )";
+					" PRIMARY KEY(docid,mi_token) )";
 
 	public static final String bigram_table_create = "CREATE TABLE NLP_BIGRAM ("+
 			"DOCID VARCHAR(40) NOT NULL "+
@@ -52,9 +52,9 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			", OBSERVED INT DEFAULT 0 ,"+
 			" PRIMARY KEY(docid,first_token,second_token))";
 
-	public static final String unigram_index = "CREATE INDEX tindex ON NLP_UNIGRAM token";
-	public static final String bigram_index1 = "CREATE INDEX first_index ON NLP_BIGRAM first_token";
-	public static final String bigram_index2 = "CREATE INDEX second_index ON NLP_BIGRAM second_token";
+	public static final String unigram_index = "CREATE INDEX tindex ON NLP_UNIGRAM (mi_token)";
+	public static final String bigram_index1 = "CREATE INDEX first_index ON NLP_BIGRAM (first_token)";
+	public static final String bigram_index2 = "CREATE INDEX second_index ON NLP_BIGRAM (second_token)";
 
 	public static final String PARAM_MI_DATABASE_URL = "miDatabaseUrl";
 	@ConfigurationParameter(
@@ -90,17 +90,18 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			description = "Indicates whether this annotator should operate in training mode")
 	private boolean isTrain = true;
 
-	private int global_distinct_unigrams=0, global_observed_unigrams=0;
-	private int global_distinct_bigrams=0, global_observed_bigrams=0;
+	private int global_observed_unigrams=0, global_observed_bigrams=0;
 
 
+	public int getGlobalObservedUnigrams(){ return global_observed_unigrams; }
+	public int getGlobalObservedBigrams(){ return global_observed_bigrams; }
 
 	@Override
 	public void process(JCas jCas) throws AnalysisEngineProcessException {
 
-		System.out.println("Database URL was:"+miDatabaseUrl); System.out.flush();
-		System.out.println("Database User was:"+miDatabaseUser); System.out.flush();
-		System.out.println("Database Password was:"+miDatabasePassword); System.out.flush();
+		System.out.println("Input MI Database URL was:"+miDatabaseUrl); System.out.flush();
+		this.getContext().getLogger().log(Level.FINE,"Database User was:"+miDatabaseUser);
+		this.getContext().getLogger().log(Level.FINE,"Database Password was:"+miDatabasePassword);
 		JCas appView = null;
 		String docid = null;
 		Hashtable<String,Integer> unigram_counts = new Hashtable<String,Integer>();
@@ -117,36 +118,15 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 		for(DocumentID di : JCasUtil.select(jCas, DocumentID.class)) {
 			docid = di.getDocumentID();
 		}
+		getTokenCounts(appView, unigram_counts, bigram_counts);
 		if(isTrain) {
-			String cur_cover=null,prev_cover="___DOCUMENT_START___";
-			for(BaseToken tok : JCasUtil.select(appView, BaseToken.class)) {	
-				cur_cover = tok.getCoveredText();
-				Integer ucount = unigram_counts.get(cur_cover);
-				if(ucount==null) unigram_counts.put(cur_cover,1);
-				else {
-					unigram_counts.put(cur_cover,ucount+1);
-				}
-				Hashtable<String,Integer>bcounts = bigram_counts.get(prev_cover);
-				if(bcounts==null) {
-					//First token is not present
-					Hashtable<String,Integer> newbie = new Hashtable<String,Integer>();
-					newbie.put(cur_cover, 1);
-					bigram_counts.put(prev_cover,newbie);
-				} else {
-					Integer bcount = bcounts.get(cur_cover);
-					if(bcount==null) bcounts.put(cur_cover,1);
-					else bcounts.put(cur_cover, (bcount+1));
-				}
-				prev_cover = cur_cover;
-			}
-
-
-			//Write our results to the database
+			//Writes to our Mutual Information Database
 			Connection _dbConnection = null;
 			try {
-				_dbConnection = DriverManager.getConnection(miDatabaseUrl);
+				//_dbConnection = DriverManager.getConnection(miDatabaseUrl,"SA","");
+				_dbConnection = DriverManager.getConnection(default_db_url);
 				PreparedStatement pst = _dbConnection.prepareStatement(
-						"INSERT INTO NLP_UNIGRAM (DOCID,TOKEN,OBSERVED) VALUES (?,?,?)");
+						"INSERT INTO NLP_UNIGRAM (DOCID,MI_TOKEN,OBSERVED) VALUES (?,?,?)");
 				for(String qkey : unigram_counts.keySet()){
 					try {
 						Integer count = unigram_counts.get(qkey);
@@ -154,7 +134,7 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 						pst.setString(2,qkey);
 						pst.setInt(3, count);
 						pst.executeUpdate();
-					} catch (java.sql.SQLIntegrityConstraintViolationException ok) {}
+					} catch (java.sql.SQLIntegrityConstraintViolationException ok) {ok.printStackTrace();}
 
 				}
 				pst = _dbConnection.prepareStatement(
@@ -181,10 +161,13 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			}
 
 		} else {
+			//Not training, create the required MutualInformation Annotations
+			// with statistics
 			Connection _dbConnection;
 			ResultSet resultset;
 			try {
-				_dbConnection = DriverManager.getConnection(miDatabaseUrl, miDatabaseUser, miDatabasePassword);
+				//_dbConnection = DriverManager.getConnection(miDatabaseUrl, miDatabaseUser, miDatabasePassword);
+				_dbConnection = DriverManager.getConnection(miDatabaseUrl);
 				Statement st = _dbConnection.createStatement();
 				String query ="SELECT SUM(OBSERVED) FROM NLP_UNIGRAM";
 				resultset = (ResultSet) st.executeQuery(query);
@@ -197,6 +180,14 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 				while(resultset.next()){
 					global_observed_bigrams = resultset.getInt(1);
 				}
+				
+				//FIXME populate tkmi
+				for(String first : bigram_counts.keySet()){
+				Hashtable<String,Integer> thecounts = bigram_counts.get(first);
+					for(String second : thecounts.keySet()){
+						TokenMutualInformation tkmi = new TokenMutualInformation(appView);
+					}
+				}
 				_dbConnection.close();
 
 			} catch (Exception e)
@@ -207,6 +198,31 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 
 		}
 
+	}
+	private void getTokenCounts(JCas appView,
+			Hashtable<String, Integer> unigram_counts,
+			Hashtable<String, Hashtable<String, Integer>> bigram_counts) {
+		String cur_cover=null,prev_cover="___DOCUMENT_START___";
+		for(BaseToken tok : JCasUtil.select(appView, BaseToken.class)) {	
+			cur_cover = tok.getCoveredText();
+			Integer ucount = unigram_counts.get(cur_cover);
+			if(ucount==null) unigram_counts.put(cur_cover,1);
+			else {
+				unigram_counts.put(cur_cover,ucount+1);
+			}
+			Hashtable<String,Integer>bcounts = bigram_counts.get(prev_cover);
+			if(bcounts==null) {
+				//First token is not present
+				Hashtable<String,Integer> newbie = new Hashtable<String,Integer>();
+				newbie.put(cur_cover, 1);
+				bigram_counts.put(prev_cover,newbie);
+			} else {
+				Integer bcount = bcounts.get(cur_cover);
+				if(bcount==null) bcounts.put(cur_cover,1);
+				else bcounts.put(cur_cover, (bcount+1));
+			}
+			prev_cover = cur_cover;
+		}
 	}
 
 	public static void initialize_database() {
