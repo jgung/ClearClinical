@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<typeSystemDescription xmlns="http://uima.apache.org/resourceSpecifier">
+	<name>DisorderSpanRelation</name>
+	<description></description>
+	<version></version>
+	<vendor></vendor>
+	<imports>
+		<import name="org.cleartk.score.type.TypeSystem"/>
+	</imports>
+	<types>
+		<typeDescription>
+			<name>org.cleartk.semeval2015.type.DisorderSpanRelation</name>
+			<description/>
+			<supertypeName>org.apache.ctakes.typesystem.type.relation.BinaryTextRelation</supertypeName>
+		</typeDescription>
+	</types>
+</typeSystemDescription>

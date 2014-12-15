@@ -30,7 +30,7 @@ import org.cleartk.classifier.feature.extractor.CleartkExtractor.Preceding;
 import org.cleartk.classifier.feature.extractor.simple.NamingExtractor;
 import org.cleartk.classifier.feature.extractor.simple.SimpleFeatureExtractor;
 import org.cleartk.classifier.feature.extractor.simple.TypePathExtractor;
-import org.cleartk.semeval2015.type.DisorderSpan;
+import org.cleartk.score.type.ScoredAnnotation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +64,7 @@ public class PartOfSpeechFeaturesExtractor implements RelationFeaturesExtractor
 			tokenPOS);
 
 	@Override
-	public List<Feature> extract(JCas jCas, DisorderSpan arg1, DisorderSpan arg2)
+	public List<Feature> extract(JCas jCas, ScoredAnnotation arg1, ScoredAnnotation arg2)
 			throws AnalysisEngineProcessException
 	{
 		List<Feature> features = new ArrayList<>();

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <typeSystemDescription xmlns="http://uima.apache.org/resourceSpecifier">
-	<name>DisorderSpan</name>
+	<name>DiseaseDisorder</name>
 	<description></description>
 	<version></version>
 	<vendor></vendor>
@@ -12,7 +12,7 @@
 		<typeDescription>
 			<name>org.cleartk.semeval2015.type.DiseaseDisorder</name>
 			<description/>
-			<supertypeName>org.cleartk.score.type.ScoredAnnotation</supertypeName> 
+			<supertypeName>org.cleartk.score.type.ScoredAnnotation</supertypeName>
 			<!-- <supertypeName>org.apache.ctakes.typesystem.type.refsem.DiseaseDisorder</supertypeName> -->
 			<features>
 				<featureDescription>

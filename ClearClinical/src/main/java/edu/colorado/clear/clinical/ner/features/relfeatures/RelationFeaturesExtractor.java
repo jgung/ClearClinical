@@ -21,7 +21,7 @@ package edu.colorado.clear.clinical.ner.features.relfeatures;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.jcas.JCas;
 import org.cleartk.classifier.Feature;
-import org.cleartk.semeval2015.type.DisorderSpan;
+import org.cleartk.score.type.ScoredAnnotation;
 
 import java.util.List;
 
@@ -39,6 +39,6 @@ public interface RelationFeaturesExtractor
 	 * @param arg2 The second identified annotation in the text.
 	 * @return A list of features indicative of the relation between the named entities
 	 */
-	public List<Feature> extract(JCas jCas, DisorderSpan arg1, DisorderSpan arg2)
+	public List<Feature> extract(JCas jCas, ScoredAnnotation arg1, ScoredAnnotation arg2)
 			throws AnalysisEngineProcessException;
 }

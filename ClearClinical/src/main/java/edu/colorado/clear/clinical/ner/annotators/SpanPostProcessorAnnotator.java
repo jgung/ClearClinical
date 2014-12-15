@@ -2,10 +2,8 @@ package edu.colorado.clear.clinical.ner.annotators;
 
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
-import edu.colorado.clear.clinical.ner.util.SemEval2015TaskCGoldAnnotator;
 import edu.colorado.clear.clinical.ner.util.UTSApiUtil;
 import gov.nih.nlm.umls.uts.webservice.UiLabel;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -23,6 +21,7 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.cleartk.semeval2015.type.DisorderSpan;
+import org.cleartk.semeval2015.type.DisorderSpanRelation;
 import org.cleartk.util.ViewURIUtil;
 import org.uimafit.component.JCasAnnotator_ImplBase;
 import org.uimafit.descriptor.ConfigurationParameter;
@@ -38,6 +37,8 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 	public static final String PARAM_OUT_FILE_PATH = "outFilePath";
 	public static final String PARAM_CUI_FILE_PATH = "cuiFilePath";
 	public static final String PARAM_USE_YTEX = "useYtex";
+	private static final Log log = LogFactory
+			.getLog(SpanPostProcessorAnnotator.class);
 	public static String DISEASE_DISORDER = "Disease_Disorder";
 	public static String CUI_LESS = "CUI-less";
 	public static String PIPE = "||";
@@ -50,15 +51,11 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 			name = PARAM_CUI_FILE_PATH,
 			description = "cui file path")
 	protected String cuiFilePath = null;
-
 	protected boolean useYtex = false;
 	@ConfigurationParameter(
 			name = PARAM_USE_YTEX,
 			description = "whether to use ytex for CUI mapping / disambiguation")
 	protected UTSApiUtil util;
-
-	private static final Log log = LogFactory
-			.getLog(SpanPostProcessorAnnotator.class);
 
 	public static String getCUI(String coveredText)
 	{
@@ -95,7 +92,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 			e.printStackTrace();
 		}
 
-		Collection<BinaryTextRelation> rels = JCasUtil.select(applicationView, BinaryTextRelation.class);
+		Collection<DisorderSpanRelation> rels = JCasUtil.select(applicationView, DisorderSpanRelation.class);
 		List<DisorderSpan> usedSpans = new ArrayList<>();
 		List<SortableDisorder> disorders = new ArrayList<>();
 
@@ -110,21 +107,23 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 			text = text.replaceAll("\\s+", " ");
 			String cui = CUI_LESS;
 			boolean add = false;
-			log.debug("Looking for cuis for binary text relation:"+text);
+			log.debug("Looking for cuis for binary text relation:" + text);
 			if (DocIDAnnotator.stringCUIMap.containsKey(text))
 			{
 				cui = getCUI(text);
-				log.debug("Got CUI from direct map lookup:"+cui);
+				log.debug("Got CUI from direct map lookup:" + cui);
 				add = true;
-			} else {
+			} else
+			{
 				List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
 				if (list.size() > 0)
 				{
 					cui = list.get(0).getUi();
-					log.debug(text+" UTS CUI:"+cui);
+					log.debug(text + " UTS CUI:" + cui);
 					add = true;
-				} else {
-					log.debug(text+" UTS CUI Lookup Failure");
+				} else
+				{
+					log.debug(text + " UTS CUI Lookup Failure");
 				}
 			}
 
@@ -152,42 +151,48 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 				text = text.replaceAll("\\s+", " ");
 				String cui = CUI_LESS;
 				boolean add = false;
-				log.debug("LOOKING for cuis for this disorder text :"+text+" in this context:"+s.getCoveredText());
+				log.debug("LOOKING for cuis for this disorder text :" + text + " in this context:" + s.getCoveredText());
 				if (DocIDAnnotator.stringCUIMap.containsKey(text))
 				{
 					cui = getCUI(text);
-					log.debug("Direct Map:"+cui);
+					log.debug("Direct Map:" + cui);
 					add = true;
-				} else {
+				} else
+				{
 					List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
 					if (list.size() > 0)
 					{
 						cui = list.get(0).getLabel();
-						log.debug("UTS CUI:"+list.get(0).getUi()+" Label:"+cui);
+						log.debug("UTS CUI:" + list.get(0).getUi() + " Label:" + cui);
 						add = true;
 					}
-					if(useYtex==true){
+					if (useYtex == true)
+					{
 						int text_length = 0;
-						for(IdentifiedAnnotation ia : JCasUtil.subiterate(applicationView,IdentifiedAnnotation.class, span,true,false)){
+						for (IdentifiedAnnotation ia : JCasUtil.subiterate(applicationView, IdentifiedAnnotation.class, span, true, false))
+						{
 							FSArray fsArray = ia.getOntologyConceptArr();
-							if(fsArray==null) continue;
-							if(ia.getEnd()-ia.getBegin() < text_length) continue;
-							text_length = ia.getEnd()-ia.getBegin();
-							for(FeatureStructure featureStructure : fsArray.toArray()){
+							if (fsArray == null) continue;
+							if (ia.getEnd() - ia.getBegin() < text_length) continue;
+							text_length = ia.getEnd() - ia.getBegin();
+							for (FeatureStructure featureStructure : fsArray.toArray())
+							{
 								OntologyConcept con = (OntologyConcept) featureStructure;
 								UmlsConcept uc = null;
-								if(con instanceof UmlsConcept) uc = (UmlsConcept) con;
-								String message = "YTEX Got CUI:"+uc.getCui()+" from "+ia.getCoveredText()+"  ;SemType:"+uc.getTui()+" Score:"+uc.getScore();
-								if(uc.getOid()!=null) message+=" OID:"+uc.getOid();
-								if(uc.getOui()!=null) message+=" OUI:"+uc.getOui();
-								if(uc.getDisambiguated()==true) {
-									message = "YTEX Accepted "+message;
-									if(uc.getScore()<1) continue;
+								if (con instanceof UmlsConcept) uc = (UmlsConcept) con;
+								String message = "YTEX Got CUI:" + uc.getCui() + " from " + ia.getCoveredText() + "  ;SemType:" + uc.getTui() + " Score:" + uc.getScore();
+								if (uc.getOid() != null) message += " OID:" + uc.getOid();
+								if (uc.getOui() != null) message += " OUI:" + uc.getOui();
+								if (uc.getDisambiguated() == true)
+								{
+									message = "YTEX Accepted " + message;
+									if (uc.getScore() < 1) continue;
 									cui = uc.getCui();
 									add = true;
 									log.info(message);
-								} else {
-									message = "YTEX Rejected "+message;
+								} else
+								{
+									message = "YTEX Rejected " + message;
 								}
 							}
 						}

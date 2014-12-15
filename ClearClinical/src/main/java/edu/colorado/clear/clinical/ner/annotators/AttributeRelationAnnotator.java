@@ -3,7 +3,6 @@ package edu.colorado.clear.clinical.ner.annotators;
 import com.google.common.collect.Lists;
 import edu.colorado.clear.clinical.ner.features.relfeatures.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
-import edu.colorado.clear.clinical.ner.util.SemEval2015GoldAnnotator;
 import org.apache.ctakes.typesystem.type.relation.RelationArgument;
 import org.apache.ctakes.typesystem.type.textspan.Sentence;
 import org.apache.uima.UimaContext;
@@ -16,19 +15,19 @@ import org.cleartk.classifier.CleartkAnnotator;
 import org.cleartk.classifier.CleartkProcessingException;
 import org.cleartk.classifier.Feature;
 import org.cleartk.classifier.Instance;
+import org.cleartk.semeval2015.type.DiseaseDisorderAttribute;
+import org.cleartk.semeval2015.type.DisorderRelation;
 import org.cleartk.semeval2015.type.DisorderSpan;
-import org.cleartk.semeval2015.type.DisorderSpanRelation;
 import org.uimafit.descriptor.ConfigurationParameter;
 import org.uimafit.util.JCasUtil;
 
 import java.util.*;
 
 /* Adapted from the cTAKES relation extractor */
-public class DisjointSpanAnnotator extends CleartkAnnotator<Boolean>
+public class AttributeRelationAnnotator extends CleartkAnnotator<String>
 {
 
 	public static final String NO_RELATION_CATEGORY = "-NONE-";
-
 	public static final String PARAM_PROBABILITY_OF_KEEPING_A_NEGATIVE_EXAMPLE =
 			"ProbabilityOfKeepingANegativeExample";
 	public static boolean VERBOSE = false;
@@ -43,22 +42,31 @@ public class DisjointSpanAnnotator extends CleartkAnnotator<Boolean>
 
 	public static void createRelation(
 			JCas jCas,
-			DisorderSpan arg1,
+			DiseaseDisorderAttribute arg1,
 			DisorderSpan arg2,
 			String predictedCategory)
 	{
 		RelationArgument relArg1 = new RelationArgument(jCas);
 		relArg1.setArgument(arg1);
 		relArg1.setRole("arg1");
-		relArg1.addToIndexes();
 		RelationArgument relArg2 = new RelationArgument(jCas);
 		relArg2.setArgument(arg2);
 		relArg2.setRole("arg2");
+		DisorderRelation relation = new DisorderRelation(jCas);
+		List<Sentence> s = JCasUtil.selectCovering(jCas, Sentence.class, arg1.getBegin(), arg1.getEnd());
+		List<Sentence> s2 = JCasUtil.selectCovering(jCas, Sentence.class, arg2.getBegin(), arg2.getEnd());
+		for (Sentence sent : s)
+		{
+			if (!s2.contains(sent))
+				return;
+		}
+		relArg1.addToIndexes();
 		relArg2.addToIndexes();
-		DisorderSpanRelation relation = new DisorderSpanRelation(jCas);
+
 		relation.setArg1(relArg1);
 		relation.setArg2(relArg2);
 		relation.setCategory(predictedCategory);
+
 		relation.addToIndexes();
 	}
 
@@ -73,9 +81,9 @@ public class DisjointSpanAnnotator extends CleartkAnnotator<Boolean>
 				new NamedEntityFeaturesExtractor());
 	}
 
-	protected Class<? extends DisorderSpanRelation> getRelationClass()
+	protected Class<? extends DisorderRelation> getRelationClass()
 	{
-		return DisorderSpanRelation.class;
+		return DisorderRelation.class;
 	}
 
 	public void initialize(UimaContext context) throws ResourceInitializationException
@@ -98,12 +106,12 @@ public class DisjointSpanAnnotator extends CleartkAnnotator<Boolean>
 			}
 		}
 
-		Map<List<Annotation>, DisorderSpanRelation> relationLookup;
+		Map<List<Annotation>, DisorderRelation> relationLookup;
 		relationLookup = new HashMap<>();
 		if (this.isTraining())
 		{
 			relationLookup = new HashMap<>();
-			for (DisorderSpanRelation relation : JCasUtil.select(jCas, this.getRelationClass()))
+			for (DisorderRelation relation : JCasUtil.select(jCas, this.getRelationClass()))
 			{
 				Annotation arg1 = relation.getArg1().getArgument();
 				Annotation arg2 = relation.getArg2().getArgument();
@@ -112,12 +120,10 @@ public class DisjointSpanAnnotator extends CleartkAnnotator<Boolean>
 			}
 		}
 
-		// walk through each sentence in the text
 		for (Annotation coveringAnnotation : JCasUtil.select(jCas, coveringClass))
 		{
 
-			// collect all relevant relation arguments from the sentence
-			List<DisorderSpanPair> candidatePairs;
+			List<DisorderRel> candidatePairs;
 			if (this.isTraining())
 			{
 				candidatePairs = this.getSpanPairs(jCas, coveringAnnotation);
@@ -126,68 +132,38 @@ public class DisjointSpanAnnotator extends CleartkAnnotator<Boolean>
 				candidatePairs = this.getSpanPairs(appView, coveringAnnotation); // appView
 			}
 
-			// walk through the pairs of annotations
-			for (DisorderSpanPair pair : candidatePairs)
+			for (DisorderRel pair : candidatePairs)
 			{
-				DisorderSpan arg1 = pair.getArg1();
+				DiseaseDisorderAttribute arg1 = pair.getArg1();
 				DisorderSpan arg2 = pair.getArg2();
 
-				// apply all the feature extractors to extract the list of features
 				List<Feature> features = new ArrayList<>();
 				for (RelationFeaturesExtractor extractor : this.featureExtractors)
 				{
 					features.addAll(extractor.extract(jCas, arg1, arg2));
 				}
 
-				// sanity check on feature values
-				for (Feature feature : features)
-				{
-					if (feature.getValue() == null)
-					{
-						String message = "Null value found in %s from %s";
-						throw new IllegalArgumentException(String.format(message, feature, features));
-					}
-				}
-
-				// during training, feed the features to the data writer
 				if (this.isTraining())
 				{
 					String category = this.getRelationCategory(relationLookup, arg1, arg2);
 					if (category == null)
-					{
 						continue;
-					}
-					boolean rel;
-					if (!category.equals(NO_RELATION_CATEGORY))
-					{
-						if (VERBOSE)
-							System.out.println("RELATION " + category + ": " + arg1.getCoveredText() + " " + arg2.getCoveredText());
-						rel = true;
-					} else
-					{
-						rel = false;
-					}
-
-					this.dataWriter.write(new Instance<>(rel, features));
+					this.dataWriter.write(new Instance<>(category, features));
 				} else
 				{
-					boolean rel = this.classify(features);
-					// add a relation annotation if a true relation was predicted
-					if (rel)
-					{
-						createRelation(appView, arg1, arg2, SemEval2015GoldAnnotator.DISJOINT_SPAN);
-					}
+					String rel = this.classify(features);
+					createRelation(appView, arg1, arg2, rel);
 				}
 			}
 		}
 	}
 
 	protected String getRelationCategory(
-			Map<List<Annotation>, DisorderSpanRelation> relationLookup,
-			DisorderSpan arg1,
+			Map<List<Annotation>, DisorderRelation> relationLookup,
+			DiseaseDisorderAttribute arg1,
 			DisorderSpan arg2)
 	{
-		DisorderSpanRelation relation = relationLookup.get(Arrays.asList(arg1, arg2));
+		DisorderRelation relation = relationLookup.get(Arrays.asList(arg1, arg2));
 		String category;
 		if (relation != null)
 		{
@@ -202,48 +178,40 @@ public class DisjointSpanAnnotator extends CleartkAnnotator<Boolean>
 		return category;
 	}
 
-	protected boolean classify(List<Feature> features) throws CleartkProcessingException
+	protected String classify(List<Feature> features) throws CleartkProcessingException
 	{
 		return this.classifier.classify(features);
 	}
 
-	public List<DisorderSpanPair> getSpanPairs(JCas jCas, Annotation sentence)
+	public List<DisorderRel> getSpanPairs(JCas jCas, Annotation sentence)
 	{
+		int start = sentence.getBegin();
+		int end = sentence.getEnd();
+		List<DiseaseDisorderAttribute> attSpans =
+				JCasUtil.selectCovered(jCas, DiseaseDisorderAttribute.class, start, end);
+		List<DisorderSpan> disorderSpans =
+				JCasUtil.selectCovered(jCas, DisorderSpan.class, start, end);
+		List<DisorderRel> pairs = new ArrayList<>();
+		for (DiseaseDisorderAttribute att : attSpans)
+			for (DisorderSpan disorder : disorderSpans)
+				pairs.add(new DisorderRel(att, disorder));
 
-		List<DisorderSpan> spans =
-				JCasUtil.selectCovered(jCas, DisorderSpan.class, sentence.getBegin(), sentence.getEnd());
-
-		List<DisorderSpanPair> pairs = new ArrayList<>();
-		for (DisorderSpan arg1 : spans)
-		{
-			for (DisorderSpan arg2 : spans)
-			{
-				if (!arg1.equals(arg2))
-				{
-					// only consider ordered pairs
-					if (arg1.getBegin() < arg2.getBegin())
-					{
-						pairs.add(new DisorderSpanPair(arg1, arg2));
-					}
-				}
-			}
-		}
 		return pairs;
 	}
 
-	public static class DisorderSpanPair
+	public static class DisorderRel
 	{
 
-		private final DisorderSpan arg1;
+		private final DiseaseDisorderAttribute arg1;
 		private final DisorderSpan arg2;
 
-		public DisorderSpanPair(DisorderSpan arg1, DisorderSpan arg2)
+		public DisorderRel(DiseaseDisorderAttribute arg1, DisorderSpan arg2)
 		{
 			this.arg1 = arg1;
 			this.arg2 = arg2;
 		}
 
-		public final DisorderSpan getArg1()
+		public final DiseaseDisorderAttribute getArg1()
 		{
 			return arg1;
 		}
