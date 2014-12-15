@@ -23,7 +23,7 @@ import org.apache.ctakes.typesystem.type.syntax.TreebankNode;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.jcas.JCas;
 import org.cleartk.classifier.Feature;
-import org.cleartk.semeval2015.type.DisorderSpan;
+import org.cleartk.score.type.ScoredAnnotation;
 import org.uimafit.util.JCasUtil;
 
 import java.util.ArrayList;
@@ -77,8 +77,8 @@ public class PhraseChunkingExtractor implements RelationFeaturesExtractor
 	}
 
 	@Override
-	public List<Feature> extract(JCas jCas, DisorderSpan arg1,
-	                             DisorderSpan arg2) throws AnalysisEngineProcessException
+	public List<Feature> extract(JCas jCas, ScoredAnnotation arg1,
+	                             ScoredAnnotation arg2) throws AnalysisEngineProcessException
 	{
 
 

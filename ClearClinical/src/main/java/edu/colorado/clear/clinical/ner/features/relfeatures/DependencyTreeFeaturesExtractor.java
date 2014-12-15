@@ -22,7 +22,7 @@ import org.apache.ctakes.typesystem.type.syntax.ConllDependencyNode;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.jcas.JCas;
 import org.cleartk.classifier.Feature;
-import org.cleartk.semeval2015.type.DisorderSpan;
+import org.cleartk.score.type.ScoredAnnotation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +31,8 @@ public class DependencyTreeFeaturesExtractor implements RelationFeaturesExtracto
 {
 
 	@Override
-	public List<Feature> extract(JCas jCas, DisorderSpan arg1,
-	                             DisorderSpan arg2) throws AnalysisEngineProcessException
+	public List<Feature> extract(JCas jCas, ScoredAnnotation arg1,
+	                             ScoredAnnotation arg2) throws AnalysisEngineProcessException
 	{
 
 		List<Feature> features = new ArrayList<>();
@@ -41,7 +41,7 @@ public class DependencyTreeFeaturesExtractor implements RelationFeaturesExtracto
 		return features;
 	}
 
-	public List<Feature> extractForNode(JCas jCas, DisorderSpan mention, String ftrPrefix)
+	public List<Feature> extractForNode(JCas jCas, ScoredAnnotation mention, String ftrPrefix)
 	{
 		List<Feature> features = new ArrayList<>();
 		ConllDependencyNode mentionHeadNode = DependencyParseUtils.findAnnotationHead(jCas, mention);

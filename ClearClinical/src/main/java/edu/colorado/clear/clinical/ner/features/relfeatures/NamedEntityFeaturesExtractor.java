@@ -28,7 +28,7 @@ import org.cleartk.classifier.feature.extractor.CleartkExtractorException;
 import org.cleartk.classifier.feature.extractor.annotationpair.DistanceExtractor;
 import org.cleartk.classifier.feature.extractor.simple.NamingExtractor;
 import org.cleartk.classifier.feature.extractor.simple.SimpleFeatureExtractor;
-import org.cleartk.semeval2015.type.DisorderSpan;
+import org.cleartk.score.type.ScoredAnnotation;
 import org.uimafit.util.JCasUtil;
 
 import java.util.ArrayList;
@@ -72,7 +72,7 @@ public class NamedEntityFeaturesExtractor implements RelationFeaturesExtractor
 	private DistanceExtractor nEntityMentionsBetween = new DistanceExtractor(null, EntityMention.class);
 
 	@Override
-	public List<Feature> extract(JCas jCas, DisorderSpan arg1, DisorderSpan arg2)
+	public List<Feature> extract(JCas jCas, ScoredAnnotation arg1, ScoredAnnotation arg2)
 			throws AnalysisEngineProcessException
 	{
 

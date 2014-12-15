@@ -18,11 +18,7 @@
  */
 package edu.colorado.clear.clinical.ner.features.relfeatures;
 
-import org.apache.ctakes.constituency.parser.util.AnnotationTreeUtils;
 import org.apache.ctakes.typesystem.type.syntax.BaseToken;
-import org.apache.ctakes.typesystem.type.syntax.TerminalTreebankNode;
-import org.apache.ctakes.typesystem.type.syntax.TreebankNode;
-import org.apache.ctakes.typesystem.type.textsem.EventMention;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.tcas.Annotation;
@@ -33,7 +29,7 @@ import org.cleartk.classifier.feature.extractor.annotationpair.DistanceExtractor
 import org.cleartk.classifier.feature.extractor.simple.CoveredTextExtractor;
 import org.cleartk.classifier.feature.extractor.simple.NamingExtractor;
 import org.cleartk.classifier.feature.extractor.simple.SimpleFeatureExtractor;
-import org.cleartk.semeval2015.type.DisorderSpan;
+import org.cleartk.score.type.ScoredAnnotation;
 import org.uimafit.util.JCasUtil;
 
 import java.util.ArrayList;
@@ -113,65 +109,17 @@ public class TokenFeaturesExtractor implements RelationFeaturesExtractor
 		return features;
 	}
 
-	private static TreebankNode getExpandedEvent(JCas jCas, DisorderSpan mention)
-	{
-		// since events are single words, we are at a terminal node:
-		List<TerminalTreebankNode> terms = JCasUtil.selectCovered(TerminalTreebankNode.class, mention);
-		if (terms == null || terms.size() == 0)
-		{
-			return null;
-		}
-
-		TreebankNode coveringNode = AnnotationTreeUtils.annotationNode(jCas, mention);
-		if (coveringNode == null) return terms.get(0);
-
-		String pos = terms.get(0).getNodeType();
-		// do not expand Verbs
-		if (pos.startsWith("V")) return coveringNode;
-
-		if (pos.startsWith("N"))
-		{
-			// get first NP node:
-			while (coveringNode != null && !coveringNode.getNodeType().equals("NP"))
-			{
-				coveringNode = coveringNode.getParent();
-			}
-		} else if (pos.startsWith("J"))
-		{
-			while (coveringNode != null && !coveringNode.getNodeType().equals("ADJP"))
-			{
-				coveringNode = coveringNode.getParent();
-			}
-		}
-		if (coveringNode == null) coveringNode = terms.get(0);
-		return coveringNode;
-	}
-
 	@Override
-	public List<Feature> extract(JCas jCas, DisorderSpan mention1, DisorderSpan mention2)
+	public List<Feature> extract(JCas jCas, ScoredAnnotation mention1, ScoredAnnotation mention2)
 			throws AnalysisEngineProcessException
 	{
 		List<Feature> features = new ArrayList<>();
-		Annotation arg1 = mention1;
-		Annotation arg2 = mention2;
 
-		if (arg1 instanceof EventMention)
-		{
-			arg1 = getExpandedEvent(jCas, mention1);
-			if (arg1 == null) arg1 = mention1;
-		}
-
-		if (arg2 instanceof EventMention)
-		{
-			arg2 = getExpandedEvent(jCas, mention2);
-			if (arg2 == null) arg2 = mention2;
-		}
-
-		features.addAll(this.mention1FeaturesExtractor.extract(jCas, arg1));
-		features.addAll(this.mention2FeaturesExtractor.extract(jCas, arg2));
-		features.addAll(this.tokensBetween.extractBetween(jCas, arg1, arg2));
-		features.addAll(this.nTokensBetween.extract(jCas, arg1, arg2));
-		features.addAll(getConcatFeatures(jCas, arg1, arg2));
+		features.addAll(this.mention1FeaturesExtractor.extract(jCas, mention1));
+		features.addAll(this.mention2FeaturesExtractor.extract(jCas, mention2));
+		features.addAll(this.tokensBetween.extractBetween(jCas, mention1, mention2));
+		features.addAll(this.nTokensBetween.extract(jCas, mention1, mention2));
+		features.addAll(getConcatFeatures(jCas, mention1, mention2));
 
 		return features;
 	}
