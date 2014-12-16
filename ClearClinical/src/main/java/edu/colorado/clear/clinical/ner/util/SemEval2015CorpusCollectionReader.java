@@ -25,11 +25,11 @@ public class SemEval2015CorpusCollectionReader extends
 		JCasCollectionReader_ImplBase {
 
 	public static final String TEXT_SUFFIX = "txt";
-	public static final String PARAM_FILES = "files";
+	public static final String PARAM_FILES = "fileroot";
 	@ConfigurationParameter(
 			name = PARAM_FILES,
 			description = "points to a semeval-2014-unlabeled-mimic-notes.v1")
-	protected Collection<File> files;
+	protected String fileroot;
 
 	protected List<File> textFiles = new ArrayList<>();
 	protected int totalFiles = 0;
@@ -51,6 +51,11 @@ public class SemEval2015CorpusCollectionReader extends
 
 	public void initialize(UimaContext context) throws ResourceInitializationException
 	{
+		String[] trainExtension = {SemEval2015CorpusCollectionReader.TEXT_SUFFIX};
+		Collection<File> files = FileUtils.listFiles(
+				new File(fileroot),
+				trainExtension, true);
+
 		for (File f : files)
 		{
 			File textFile = new File(f.getPath());

@@ -2,9 +2,9 @@ package edu.colorado.clear.clinical.ner.pipeline;
 
 
 import edu.colorado.clear.clinical.ner.annotators.*;
+import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CorpusCollectionReader;
-import edu.colorado.clear.clinical.ner.util.SemEval2015TaskCGoldAnnotator;
 import edu.uab.ccts.nlp.uima.annotator.MutualInformationAnnotator;
 import edu.uab.ccts.nlp.uima.annotator.SemEval2015Task2Consumer;
 
@@ -14,7 +14,14 @@ import org.apache.ctakes.typesystem.type.syntax.BaseToken;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.uima.UIMAFramework;
+import org.apache.uima.analysis_engine.AnalysisEngine;
+import org.apache.uima.analysis_engine.AnalysisEngineDescription;
+import org.apache.uima.collection.CollectionProcessingEngine;
 import org.apache.uima.collection.CollectionReader;
+import org.apache.uima.collection.CollectionReaderDescription;
+import org.apache.uima.collection.metadata.CpeDescription;
+import org.apache.uima.impl.CollectionReaderFactory_impl;
 import org.apache.uima.jcas.JCas;
 import org.cleartk.semeval2015.type.DiseaseDisorderAttribute;
 import org.hsqldb.server.Server;
@@ -22,9 +29,11 @@ import org.uimafit.component.ViewCreatorAnnotator;
 import org.uimafit.component.ViewTextCopierAnnotator;
 import org.uimafit.factory.AggregateBuilder;
 import org.uimafit.factory.AnalysisEngineFactory;
-import org.uimafit.factory.CollectionReaderFactory;
+//import org.uimafit.factory.CollectionReaderFactory;
 import org.uimafit.pipeline.JCasIterable;
 import org.uimafit.util.JCasUtil;
+import org.apache.uima.fit.cpe.*;
+import org.apache.uima.fit.factory.CollectionReaderFactory;
 
 import java.io.File;
 import java.util.Collection;
@@ -46,23 +55,22 @@ public class MutualInformationPipeline
 
 	public static void main(String... args) throws Throwable
 	{
+		/*
 		String[] trainExtension = {SemEval2015CorpusCollectionReader.TEXT_SUFFIX};
 		
 		Collection<File> trainFiles = FileUtils.listFiles(
 				new File(unsupervised_corpus_root_path),
 				trainExtension, true);
-
-		harvestMutualInformation(trainFiles);
+		*/
+		
+		harvestMutualInformation();
+		//harvestMutualInformation(trainFiles);
 		System.out.println("Complete");
 	}
 
-	public static void harvestMutualInformation(Collection<File> files) throws Throwable
+	public static void harvestMutualInformation() throws Throwable
+	//public static void harvestMutualInformation(Collection<File> files) throws Throwable
 	{
-
-		CollectionReader reader = CollectionReaderFactory.createCollectionReader(
-				SemEval2015CorpusCollectionReader.class,
-				SemEval2015CorpusCollectionReader.PARAM_FILES,
-				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
 		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
@@ -142,15 +150,21 @@ public class MutualInformationPipeline
 		hsqlServer.setDatabasePath(0, "file:"+MutualInformationAnnotator.default_db_path);
 		hsqlServer.start();
 		MutualInformationAnnotator.initialize_database();
-		for (JCas jCas : new JCasIterable(reader, builder.createAggregate()))
-		{
-			/*
-			for(BaseToken tok : JCasUtil.select(jCas, BaseToken.class)) {
-				System.out.println("We do have tokens...");
-			}
-			*/
-			//System.out.println("Processed "+jCas.getDocumentText());
-		}
+		AnalysisEngineDescription aed = builder.createAggregateDescription();
+		CpeBuilder cbuild = new CpeBuilder();
+		cbuild.setAnalysisEngine(aed);
+		CollectionReaderDescription crd  = CollectionReaderFactory.createReaderDescription(
+				SemEval2015CorpusCollectionReader.class,
+				SemEval2015CorpusCollectionReader.PARAM_FILES,
+				unsupervised_corpus_root_path);
+		cbuild.setReader(crd);
+		cbuild.setMaxProcessingUnitThreadCount(8);
+		CpeDescription midesc = cbuild.getCpeDescription();
+		//midesc.setInputQueueSize(8);
+		//midesc.setOutputQueueSize(8);
+		//midesc.setProcessingUnitThreadCount(8);
+		CollectionProcessingEngine mifast = UIMAFramework.produceCollectionProcessingEngine(midesc);
+		mifast.process();
 		
 		hsqlServer.stop();
 	}
