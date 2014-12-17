@@ -33,7 +33,7 @@ import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 
 
-	public static final String default_db_name = "small";
+	public static final String default_db_name = "tiny";
 	public static final String default_db_path = "src/main/resources/hsqldb/"+default_db_name;
 	public static final String default_db_url = "jdbc:hsqldb:file:"+default_db_path;
 	public static final String default_db_user = "SA";
@@ -152,13 +152,13 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 				PreparedStatement p_update = _dbConnection.prepareStatement(
 						"UPDATE NLP_UNIGRAM SET OBSERVED=? WHERE MI_TOKEN= ? ");
 				for(String qkey : unigram_counts.keySet()){
+					Integer count = unigram_counts.get(qkey);
+					Integer old_count = null;
 					try {
-						Integer count = unigram_counts.get(qkey);
 						_dbConnection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-						Integer old_count = getOneTokenCount(_dbConnection,"NLP_UNIGRAM",qkey);
+						old_count = getOneTokenCount(_dbConnection,"NLP_UNIGRAM",qkey);
 						//pst.setString(1, docid);
 						_dbConnection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-						if(qkey.equals("'")) qkey="escap''d";
 						if(old_count==0) {
 							p_insert.setString(1,qkey);
 							p_insert.setInt(2, count.intValue());
@@ -168,7 +168,11 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 							p_update.setString(2,qkey);
 							p_update.executeUpdate();
 						}
-					} catch (java.sql.SQLIntegrityConstraintViolationException ok) {ok.getCause();}
+					} catch (java.sql.SQLIntegrityConstraintViolationException ok) {
+						System.out.println("Problem with "+qkey+" with count"+count);
+						if(old_count!=null) System.out.println("The old count was:"+old_count);
+						else System.out.println("null");
+						ok.getCause();}
 
 				}
 				p_insert = _dbConnection.prepareStatement(
@@ -187,8 +191,6 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 							Integer observed = thecounts.get(second);
 							if(observed==null) System.out.println("Observed was null for "+first+" and "+second);
 							_dbConnection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-							if(first.equals("'")) first="escap''d";
-							if(second.equals("'")) second="escap''d";
 							if(old_count==0){
 								p_insert.setString(1,first);
 								p_insert.setString(2,second);
@@ -200,7 +202,8 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 								p_update.setString(3,second);
 								p_update.executeUpdate();
 							}
-						} catch (java.sql.SQLIntegrityConstraintViolationException ok) {ok.printStackTrace();}
+						} catch (java.sql.SQLIntegrityConstraintViolationException ok) {
+							ok.printStackTrace();}
 					}
 				}
 				_dbConnection.close();
@@ -286,17 +289,6 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			}
 			prev_cover = cur_cover;
 		}
-		/*
-		for(String first : bigram_counts.keySet()){
-			Hashtable<String,Integer> hash = bigram_counts.get(first);
-			for(String second : hash.keySet()){
-				if(hash.get(second)==null) {
-					System.out.println(first+" and "+second+" gave a null!!!");
-					System.out.flush();
-				}
-			}
-		}
-		*/
 	}
 
 
@@ -317,17 +309,20 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 
 	private int getOneTokenCount(Connection conn, String table_name, String token){
 		Integer count = 0;
+		String ucountsql = null;
+		String clean = "";
 		try {
-			if(token.equals("'")) token="escap''d";
-			String ucountsql = "SELECT OBSERVED FROM "+table_name+
-					" WHERE MI_TOKEN=\'"+token+"\'";
+			clean = token.replaceAll("'","''" );
+			ucountsql = "SELECT OBSERVED FROM "+table_name+
+					" WHERE MI_TOKEN=\'"+clean+"\'";
 			Statement st = conn.createStatement();
+			//System.out.println(ucountsql);
 			ResultSet resultset = (ResultSet) st.executeQuery(ucountsql);
 			while(resultset.next()){
 				count = resultset.getInt(1);
 			}
 			resultset.close();
-		} catch (Exception e) { e.printStackTrace(); }
+		} catch (Exception e) { System.out.println(clean+" ----TOKEN____"+token); System.out.println(ucountsql); e.printStackTrace(); }
 		return count;
 	}
 
@@ -336,18 +331,22 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 
 	private int getBiTokenCount(Connection conn, String table_name, String first, String second){
 		Integer count = 0;
+		String f1="",s2="";
 		try {
-			if(first.equals("'")) first="escap''d";
-			if(second.equals("'")) second="escap''d";
+			f1 = first.replaceAll("'","''" );
+			s2 = second.replaceAll("'","''" );
 			String ucountsql = "SELECT OBSERVED FROM "+table_name+
-					" WHERE FIRST_TOKEN=\'"+first+"\' AND SECOND_TOKEN=\'"+second+"\'";
+					" WHERE FIRST_TOKEN=\'"+f1+"\' AND SECOND_TOKEN=\'"+s2+"\'";
 			Statement st = conn.createStatement();
 			ResultSet resultset = (ResultSet) st.executeQuery(ucountsql);
 			while(resultset.next()){
 				count = resultset.getInt(1);
 			}
 			resultset.close();
-		} catch (Exception e) { e.printStackTrace(); }
+		} catch (Exception e) { 
+			System.out.println(first+"--------"+second+"     COUNT"+count);
+			System.out.println(f1+"---+----"+s2);
+			e.printStackTrace(); }
 		return count;
 	}
 
