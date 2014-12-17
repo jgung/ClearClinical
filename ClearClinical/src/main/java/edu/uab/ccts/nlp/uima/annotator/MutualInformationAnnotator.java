@@ -33,11 +33,12 @@ import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 
 
-	public static final String default_db_name = "tiny";
+	public static final String default_db_name = "small";
 	public static final String default_db_path = "src/main/resources/hsqldb/"+default_db_name;
 	public static final String default_db_url = "jdbc:hsqldb:file:"+default_db_path;
 	public static final String default_db_user = "SA";
 	public static final String default_db_password = "";
+	private static final boolean VERBOSE = true;
 
 
 	/*
@@ -109,6 +110,14 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			name = PARAM_IS_TRAINING,
 			description = "Indicates whether this annotator should operate in training mode")
 	private boolean isTrain = true;
+	
+	public static final String PARAM_IS_CONSTRUCTION = "isConstruction";
+	@ConfigurationParameter(
+			name = PARAM_IS_CONSTRUCTION,
+			description = "Indicates whether this annotator should construct a database")
+	private boolean isConstruction = false;
+
+	
 
 	private int global_observed_unigrams=0, global_observed_bigrams=0;
 
@@ -118,18 +127,27 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas jCas) throws AnalysisEngineProcessException {
-
-		System.out.println("Input MI Database URL was:"+miDatabaseUrl); System.out.flush();
+		String message = "Input MI Database URL was:"+miDatabaseUrl;
+		if(isTrain) message+=" ; training...";
+		if(isConstruction) message+= " ; constructing MI database....";
+		if(VERBOSE) { System.out.println(message); System.out.flush(); }
 		this.getContext().getLogger().log(Level.FINE,"Database User was:"+miDatabaseUser);
 		this.getContext().getLogger().log(Level.FINE,"Database Password was:"+miDatabasePassword);
 		JCas appView = null;
+		JCas goldView = null;
 		String docid = null;
 		Hashtable<String,Integer> unigram_counts = new Hashtable<String,Integer>();
 		Hashtable<String,Hashtable<String,Integer>> bigram_counts = new Hashtable<String,Hashtable<String,Integer>>(); //Use || to divide
 
 		try
 		{
-			appView = jCas.getView(SemEval2015Constants.APP_VIEW);
+			if(!isTrain) {
+				appView = jCas.getView(SemEval2015Constants.APP_VIEW);
+				getTokenCounts(appView, unigram_counts, bigram_counts);
+			} else {
+				goldView = jCas.getView(SemEval2015Constants.GOLD_VIEW);
+				getTokenCounts(goldView, unigram_counts, bigram_counts);
+			}
 		} catch (CASException e)
 		{
 			e.printStackTrace();
@@ -138,17 +156,14 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 		for(DocumentID di : JCasUtil.select(jCas, DocumentID.class)) {
 			docid = di.getDocumentID();
 		}
-		getTokenCounts(appView, unigram_counts, bigram_counts);
-		if(isTrain) {
-			//Writes to our Mutual Information Database
+		if(isConstruction) {
+			//Writes to our Mutual Information Database (HSQLDB)
 			Connection _dbConnection = null;
 			try {
-				//_dbConnection = DriverManager.getConnection(miDatabaseUrl,"SA","");
 				_dbConnection = DriverManager.getConnection(default_db_url);
 				_dbConnection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
 				PreparedStatement p_insert = _dbConnection.prepareStatement(
 						"INSERT INTO NLP_UNIGRAM (MI_TOKEN,OBSERVED) VALUES (?,?)");
-				//"INSERT INTO NLP_UNIGRAM (DOCID,MI_TOKEN,OBSERVED) VALUES (?,?,?)");
 				PreparedStatement p_update = _dbConnection.prepareStatement(
 						"UPDATE NLP_UNIGRAM SET OBSERVED=? WHERE MI_TOKEN= ? ");
 				for(String qkey : unigram_counts.keySet()){
@@ -214,7 +229,7 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			}
 
 		} else {
-			//Not training, create the required MutualInformation Annotations
+			//Not making database, create the required MutualInformation Annotations
 			// with statistics
 			Connection _dbConnection;
 			ResultSet resultset;
@@ -235,20 +250,23 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 				}
 				Integer all_unigram_count = getTokenTotals(_dbConnection, "NLP_UNIGRAM");
 				Integer all_bigram_count = getTokenTotals(_dbConnection, "NLP_BIGRAM");
-
+				//if(VERBOSE)System.out.println("All Unigram counts"+all_unigram_count);
+				//if(VERBOSE)System.out.println("All Bigram counts"+all_bigram_count);
 				for(String first : bigram_counts.keySet()){
 					Hashtable<String,Integer> thecounts = bigram_counts.get(first);
-					Integer first_count = unigram_counts.get(first);
+					Integer first_count = getOneTokenCount(_dbConnection, "NLP_UNIGRAM", first);
 					for(String second : thecounts.keySet()){
-						Integer second_count = unigram_counts.get(first);
-						TokenMutualInformation tkmi = new TokenMutualInformation(appView);
+						Integer second_count = getOneTokenCount(_dbConnection, "NLP_UNIGRAM", second);
+						Integer jointcount = getBiTokenCount(_dbConnection, "NLP_BIGRAM", first, second);
+						TokenMutualInformation tkmi = null;
+						if(isTrain) tkmi = new TokenMutualInformation(goldView);
+						else tkmi = new TokenMutualInformation(appView);
 						tkmi.setAnnotation_x(first);
 						tkmi.setAnnotation_y(second);
 						tkmi.setCount_x(first_count);
 						tkmi.setCount_y(second_count);
-						Integer jointcount = thecounts.get(second);
 						tkmi.setCount_xy(jointcount);
-						double mi = (((double)first_count/all_unigram_count)*((double)second_count/all_unigram_count))/((double)jointcount/all_bigram_count);
+						double mi = Math.log((((double)first_count/all_unigram_count)*((double)second_count/all_unigram_count))/((double)jointcount/all_bigram_count));
 						tkmi.setMi(mi);
 						tkmi.addToIndexes();
 					}
@@ -264,12 +282,12 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 		}
 
 	}
-	private void getTokenCounts(JCas appView,
+	private void getTokenCounts(JCas jcas,
 			Hashtable<String, Integer> unigram_counts,
 			Hashtable<String, Hashtable<String, Integer>> bigram_counts
 			) {
 		String cur_cover=null,prev_cover="___DOCUMENT_START___";
-		for(BaseToken tok : JCasUtil.select(appView, BaseToken.class)) {	
+		for(BaseToken tok : JCasUtil.select(jcas, BaseToken.class)) {	
 			cur_cover = tok.getCoveredText();
 			Integer ucount = unigram_counts.get(cur_cover);
 			if(ucount==null) unigram_counts.put(cur_cover,1);

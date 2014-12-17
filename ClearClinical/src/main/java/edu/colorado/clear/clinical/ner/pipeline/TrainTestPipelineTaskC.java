@@ -49,9 +49,13 @@ public class TrainTestPipelineTaskC
 
 	public static String resourceDirPath = "src/main/resources/";
 
-	public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/train";
-	public static String semeval_devel_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/devel";
-	public static String mini_devel_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/devel";
+	//public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/train";
+	//public static String semeval_devel_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/devel";
+	//public static String mini_devel_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/devel";
+	//Directory format has changed with the new data file, new format is below. Minidev needs to be manually created if used.
+	public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/data/train";
+	public static String semeval_devel_c = resourceDirPath + "semeval-2015-task-14/data/devel";
+	public static String mini_devel_c = resourceDirPath + "semeval-2015-task-14/data/minidev";
 
 	public static String abbrFile = resourceDirPath + "data/abbr.txt";
 	public static String cuiMapFile = resourceDirPath + "data/cuiMap.txt";
@@ -142,6 +146,7 @@ public class TrainTestPipelineTaskC
 				MutualInformationAnnotator.default_db_url,
 				MutualInformationAnnotator.PARAM_IS_TRAINING,
 				true));
+		
 		
 		if (SPAN_RESOLUTION)
 		{
@@ -265,9 +270,11 @@ public class TrainTestPipelineTaskC
 				MutualInformationAnnotator.PARAM_MI_DATABASE_USER,
 				MutualInformationAnnotator.default_db_user,
 				MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
-				MutualInformationAnnotator.default_db_url,
+				MutualInformationAnnotator.default_db_password,
+				MutualInformationAnnotator.PARAM_IS_CONSTRUCTION,
+				false,
 				MutualInformationAnnotator.PARAM_IS_TRAINING,
-				false));
+				true));
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
 				SemEval2015Task2Consumer.PARAM_OUTPUT_DIRECTORY,
@@ -275,12 +282,10 @@ public class TrainTestPipelineTaskC
 
 		if (!VERBOSE) suppressLogging();
 
-		System.out.println("Attempting to create embedded database");
 		Server hsqlServer = new Server();
-		hsqlServer.setDatabaseName(0, "mutinf");
+		hsqlServer.setDatabaseName(0, MutualInformationAnnotator.default_db_name);
 		hsqlServer.setDatabasePath(0, "file:"+MutualInformationAnnotator.default_db_path);
 		hsqlServer.start();
-		MutualInformationAnnotator.initialize_database();
 
 		if (!VERBOSE) suppressLogging();
 

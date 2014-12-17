@@ -73,7 +73,9 @@ public class MutualInformationPipeline
 				MutualInformationAnnotator.PARAM_MI_DATABASE_USER,
 				MutualInformationAnnotator.default_db_user,
 				MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
-				MutualInformationAnnotator.default_db_url,
+				MutualInformationAnnotator.default_db_password,
+				MutualInformationAnnotator.PARAM_IS_CONSTRUCTION,
+				true,
 				MutualInformationAnnotator.PARAM_IS_TRAINING,
 				true));
 
