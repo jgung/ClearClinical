@@ -90,7 +90,7 @@ public class TrainTestPipelineTaskC
 		
 		for(String arg:args){
 			if(arg.equalsIgnoreCase("-ytex")) USE_YTEX=true;
-			if(arg.equalsIgnoreCase("-ytex")) USE_MI=true;
+			if(arg.equalsIgnoreCase("-mi")) USE_MI=true;
 			if(arg.equalsIgnoreCase("-skiptraining")) SKIP_TRAINING=true;
 		}
 

@@ -81,7 +81,7 @@ public class AttributeRelationAnnotator extends CleartkAnnotator<String>
 				new PhraseChunkingExtractor(),
 				new DependencyTreeFeaturesExtractor(),
 				new DependencyPathFeaturesExtractor(),
-				new ScoredDistanceFeaturesExtractor("MutualInf",ScoredAnnotation.class),
+				//new ScoredDistanceFeaturesExtractor("MutualInf",ScoredAnnotation.class),
 				new NamedEntityFeaturesExtractor());
 	}
 
