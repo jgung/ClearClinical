@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Hashtable;
 
-import org.apache.ctakes.typesystem.type.structured.DocumentID;
+//import org.apache.ctakes.typesystem.type.structured.DocumentID;
 import org.apache.ctakes.typesystem.type.syntax.BaseToken;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -40,34 +40,21 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 	public static final String default_db_password = "";
 	private static final boolean VERBOSE = true;
 
-
-	/*
-	public static final String default_db_name = "medics";
-	public static final String default_db_url = "jdbc:oracle:thin:medics/i2b2data@genome-bmidb.ad.uab.edu:1521:ccts2";
-	public static final String default_db_user = "medics";
-	public static final String default_db_password = "i2b2data";
-	 */
-
 	public static final String default_unsupervised_corpus = "src/main/resources/"+
 			"semeval-2014-unlabelled-mimic-notes.v1";
 
 	public static final String unigram_table_create = 
 			"CREATE TABLE NLP_UNIGRAM ( "+
-					//"DOCID VARCHAR(40) NOT NULL "+
 					" MI_TOKEN VARCHAR(100) NOT NULL "+ 
 					", OBSERVED INT DEFAULT 0 , "+
-					//" PRIMARY KEY(docid,mi_token) )";
 					" PRIMARY KEY(mi_token) )";
 
 	public static final String bigram_table_create = "CREATE TABLE NLP_BIGRAM ("+
-			//"DOCID VARCHAR(40) NOT NULL "+
 			" FIRST_TOKEN VARCHAR(100) NOT NULL "+ 
 			", SECOND_TOKEN VARCHAR(100) NOT NULL "+ 
 			", OBSERVED INT DEFAULT 0 ,"+
 			" PRIMARY KEY(first_token,second_token))";
-	//" PRIMARY KEY(docid,first_token,second_token))";
 
-	//public static final String unigram_index = "CREATE INDEX tindex ON NLP_UNIGRAM (mi_token)";
 	public static final String bigram_index1 = "CREATE INDEX first_index ON NLP_BIGRAM (first_token)";
 	public static final String bigram_index2 = "CREATE INDEX second_index ON NLP_BIGRAM (second_token)";
 	//FIXME Wrap SELECT and UPDATE statements in HSQLDB PROCEDURE
@@ -135,7 +122,7 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 		this.getContext().getLogger().log(Level.FINE,"Database Password was:"+miDatabasePassword);
 		JCas appView = null;
 		JCas goldView = null;
-		String docid = null;
+		//String docid = null;
 		Hashtable<String,Integer> unigram_counts = new Hashtable<String,Integer>();
 		Hashtable<String,Hashtable<String,Integer>> bigram_counts = new Hashtable<String,Hashtable<String,Integer>>(); //Use || to divide
 
@@ -153,9 +140,11 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			e.printStackTrace();
 			System.exit(0);
 		}
+		/*
 		for(DocumentID di : JCasUtil.select(jCas, DocumentID.class)) {
 			docid = di.getDocumentID();
 		}
+		*/
 		if(isConstruction) {
 			//Writes to our Mutual Information Database (HSQLDB)
 			Connection _dbConnection = null;
@@ -250,26 +239,26 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 				}
 				Integer all_unigram_count = getTokenTotals(_dbConnection, "NLP_UNIGRAM");
 				Integer all_bigram_count = getTokenTotals(_dbConnection, "NLP_BIGRAM");
-				//if(VERBOSE)System.out.println("All Unigram counts"+all_unigram_count);
-				//if(VERBOSE)System.out.println("All Bigram counts"+all_bigram_count);
-				for(String first : bigram_counts.keySet()){
-					Hashtable<String,Integer> thecounts = bigram_counts.get(first);
+				for (BaseToken t : JCasUtil.select(jCas, BaseToken.class)){
+					BaseToken next = JCasUtil.selectFollowing(jCas, BaseToken.class, t, 1).remove(0);
+					String first = t.getCoveredText();
+					String second = next.getCoveredText();
 					Integer first_count = getOneTokenCount(_dbConnection, "NLP_UNIGRAM", first);
-					for(String second : thecounts.keySet()){
-						Integer second_count = getOneTokenCount(_dbConnection, "NLP_UNIGRAM", second);
-						Integer jointcount = getBiTokenCount(_dbConnection, "NLP_BIGRAM", first, second);
-						TokenMutualInformation tkmi = null;
-						if(isTrain) tkmi = new TokenMutualInformation(goldView);
-						else tkmi = new TokenMutualInformation(appView);
-						tkmi.setAnnotation_x(first);
-						tkmi.setAnnotation_y(second);
-						tkmi.setCount_x(first_count);
-						tkmi.setCount_y(second_count);
-						tkmi.setCount_xy(jointcount);
-						double mi = Math.log((((double)first_count/all_unigram_count)*((double)second_count/all_unigram_count))/((double)jointcount/all_bigram_count));
-						tkmi.setMi(mi);
-						tkmi.addToIndexes();
-					}
+					Integer second_count = getOneTokenCount(_dbConnection, "NLP_UNIGRAM", second);
+					Integer jointcount = getBiTokenCount(_dbConnection, "NLP_BIGRAM", first, second);
+					TokenMutualInformation tkmi = null;
+					if(isTrain) tkmi = new TokenMutualInformation(goldView);
+					else tkmi = new TokenMutualInformation(appView);
+					tkmi.setBegin(t.getBegin());
+					tkmi.setEnd(t.getEnd());
+					tkmi.setAnnotation_x(first);
+					tkmi.setAnnotation_y(second);
+					tkmi.setCount_x(first_count);
+					tkmi.setCount_y(second_count);
+					tkmi.setCount_xy(jointcount);
+					double mi = Math.log((((double)first_count/all_unigram_count)*((double)second_count/all_unigram_count))/((double)jointcount/all_bigram_count));
+					tkmi.setScore(mi);
+					tkmi.addToIndexes();
 				}
 				_dbConnection.close();
 

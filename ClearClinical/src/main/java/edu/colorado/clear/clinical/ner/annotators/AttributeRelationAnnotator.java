@@ -1,8 +1,10 @@
 package edu.colorado.clear.clinical.ner.annotators;
 
 import com.google.common.collect.Lists;
+
 import edu.colorado.clear.clinical.ner.features.relfeatures.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
+
 import org.apache.ctakes.typesystem.type.relation.RelationArgument;
 import org.apache.ctakes.typesystem.type.textspan.Sentence;
 import org.apache.uima.UimaContext;
@@ -15,6 +17,7 @@ import org.cleartk.classifier.CleartkAnnotator;
 import org.cleartk.classifier.CleartkProcessingException;
 import org.cleartk.classifier.Feature;
 import org.cleartk.classifier.Instance;
+import org.cleartk.score.type.ScoredAnnotation;
 import org.cleartk.semeval2015.type.DiseaseDisorderAttribute;
 import org.cleartk.semeval2015.type.DisorderRelation;
 import org.cleartk.semeval2015.type.DisorderSpan;
@@ -78,6 +81,7 @@ public class AttributeRelationAnnotator extends CleartkAnnotator<String>
 				new PhraseChunkingExtractor(),
 				new DependencyTreeFeaturesExtractor(),
 				new DependencyPathFeaturesExtractor(),
+				new ScoredDistanceFeaturesExtractor("MutualInf",ScoredAnnotation.class),
 				new NamedEntityFeaturesExtractor());
 	}
 

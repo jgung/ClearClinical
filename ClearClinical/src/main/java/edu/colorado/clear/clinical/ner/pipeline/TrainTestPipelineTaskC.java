@@ -68,6 +68,7 @@ public class TrainTestPipelineTaskC
 	public static boolean SPAN_RESOLUTION = false;
 	public static boolean VERBOSE = false;
 	public static boolean USE_YTEX = false;
+	public static boolean USE_MI = false;
 	public static boolean SKIP_TRAINING = false;
 
 	public static void main(String... args) throws Throwable
@@ -89,6 +90,7 @@ public class TrainTestPipelineTaskC
 		
 		for(String arg:args){
 			if(arg.equalsIgnoreCase("-ytex")) USE_YTEX=true;
+			if(arg.equalsIgnoreCase("-ytex")) USE_MI=true;
 			if(arg.equalsIgnoreCase("-skiptraining")) SKIP_TRAINING=true;
 		}
 
@@ -137,16 +139,17 @@ public class TrainTestPipelineTaskC
 				DefaultSequenceDataWriterFactory.PARAM_DATA_WRITER_CLASS_NAME,
 				CRFSuiteStringOutcomeDataWriter.class));
 
-		builder.add(AnalysisEngineFactory.createPrimitiveDescription(MutualInformationAnnotator.class,
-				MutualInformationAnnotator.PARAM_MI_DATABASE_URL,
-				MutualInformationAnnotator.default_db_url,
-				MutualInformationAnnotator.PARAM_MI_DATABASE_USER,
-				MutualInformationAnnotator.default_db_user,
-				MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
-				MutualInformationAnnotator.default_db_url,
-				MutualInformationAnnotator.PARAM_IS_TRAINING,
-				true));
-		
+		if(USE_MI) {
+			builder.add(AnalysisEngineFactory.createPrimitiveDescription(MutualInformationAnnotator.class,
+					MutualInformationAnnotator.PARAM_MI_DATABASE_URL,
+					MutualInformationAnnotator.default_db_url,
+					MutualInformationAnnotator.PARAM_MI_DATABASE_USER,
+					MutualInformationAnnotator.default_db_user,
+					MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
+					MutualInformationAnnotator.default_db_url,
+					MutualInformationAnnotator.PARAM_IS_TRAINING,
+					true));
+		}
 		
 		if (SPAN_RESOLUTION)
 		{
@@ -263,18 +266,20 @@ public class TrainTestPipelineTaskC
 				false,
 				GenericJarClassifierFactory.PARAM_CLASSIFIER_JAR_PATH,
 				new File(attRelsDir, "model.jar").getPath()));
-		
-		builder.add(AnalysisEngineFactory.createPrimitiveDescription(MutualInformationAnnotator.class,
-				MutualInformationAnnotator.PARAM_MI_DATABASE_URL,
-				MutualInformationAnnotator.default_db_url,
-				MutualInformationAnnotator.PARAM_MI_DATABASE_USER,
-				MutualInformationAnnotator.default_db_user,
-				MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
-				MutualInformationAnnotator.default_db_password,
-				MutualInformationAnnotator.PARAM_IS_CONSTRUCTION,
-				false,
-				MutualInformationAnnotator.PARAM_IS_TRAINING,
-				true));
+
+		if(USE_MI) {
+			builder.add(AnalysisEngineFactory.createPrimitiveDescription(MutualInformationAnnotator.class,
+					MutualInformationAnnotator.PARAM_MI_DATABASE_URL,
+					MutualInformationAnnotator.default_db_url,
+					MutualInformationAnnotator.PARAM_MI_DATABASE_USER,
+					MutualInformationAnnotator.default_db_user,
+					MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
+					MutualInformationAnnotator.default_db_password,
+					MutualInformationAnnotator.PARAM_IS_CONSTRUCTION,
+					false,
+					MutualInformationAnnotator.PARAM_IS_TRAINING,
+					true));
+		}
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
 				SemEval2015Task2Consumer.PARAM_OUTPUT_DIRECTORY,
@@ -282,15 +287,18 @@ public class TrainTestPipelineTaskC
 
 		if (!VERBOSE) suppressLogging();
 
-		Server hsqlServer = new Server();
-		hsqlServer.setDatabaseName(0, MutualInformationAnnotator.default_db_name);
-		hsqlServer.setDatabasePath(0, "file:"+MutualInformationAnnotator.default_db_path);
-		hsqlServer.start();
+		Server hsqlServer = null;
+		if(USE_MI){
+			hsqlServer = new Server();
+			hsqlServer.setDatabaseName(0, MutualInformationAnnotator.default_db_name);
+			hsqlServer.setDatabasePath(0, "file:"+MutualInformationAnnotator.default_db_path);
+			hsqlServer.start();
+		}
 
 		if (!VERBOSE) suppressLogging();
 
 		String stats = getRelationStats(reader, builder.createAggregate());
-		hsqlServer.stop();
+		if(hsqlServer!=null && USE_MI) hsqlServer.stop();
 
 		return stats;
 
