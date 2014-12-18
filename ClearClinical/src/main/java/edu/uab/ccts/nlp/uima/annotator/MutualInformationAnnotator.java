@@ -256,7 +256,14 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 					tkmi.setCount_x(first_count);
 					tkmi.setCount_y(second_count);
 					tkmi.setCount_xy(jointcount);
-					double mi = Math.log((((double)first_count/all_unigram_count)*((double)second_count/all_unigram_count))/((double)jointcount/all_bigram_count));
+					double mi = Math.log(
+							((double)jointcount/all_bigram_count)
+							/
+							(
+							((double)first_count/all_unigram_count)*
+							((double)second_count/all_unigram_count)
+							)
+					);
 					tkmi.setScore(mi);
 					tkmi.addToIndexes();
 				}
