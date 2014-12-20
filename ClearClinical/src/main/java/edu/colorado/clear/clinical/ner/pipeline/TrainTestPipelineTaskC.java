@@ -64,8 +64,9 @@ public class TrainTestPipelineTaskC
 	public static String attributeModels = "target/models/attribute";
 	public static String relModels = "target/models/rel";
 	public static String attRelModels = "target/models/attRel";
+	public static String attNormModels = "target/models/attNorm";
 
-	public static boolean SPAN_RESOLUTION = false;
+	public static boolean SPAN_RESOLUTION = true;
 	public static boolean VERBOSE = false;
 	public static boolean USE_YTEX = false;
 	public static boolean USE_MI = false;
@@ -79,9 +80,13 @@ public class TrainTestPipelineTaskC
 		File relModelDir = new File(relModels);
 		File attModelDir = new File(attributeModels);
 		File attRelsDir = new File(attRelModels);
+		File attNormDir = new File(attNormModels);
 
 		File trainDir = new File(semeval_train_c);
 		File testDir = new File(semeval_devel_c);
+
+		System.out.println(trainDir.getAbsolutePath());
+		System.out.println(testDir.getAbsolutePath());
 
 		Collection<File> trainFiles = FileUtils.listFiles(trainDir,
 				trainExtension, true);
@@ -94,13 +99,13 @@ public class TrainTestPipelineTaskC
 			if(arg.equalsIgnoreCase("-skiptraining")) SKIP_TRAINING=true;
 		}
 
-		if (!SKIP_TRAINING) train(trainFiles, crfModelDir, relModelDir, attModelDir, attRelsDir);
-		String stats = test(testFiles, crfModelDir, relModelDir, attModelDir, attRelsDir);
+		if (!SKIP_TRAINING) train(trainFiles, crfModelDir, relModelDir, attModelDir, attRelsDir, attNormDir);
+		String stats = test(testFiles, crfModelDir, relModelDir, attModelDir, attRelsDir, attNormDir);
 		System.out.println(stats);
 	}
 
 	public static void train(Collection<File> files, File ddModelDir, File relModelDir,
-	                         File attModelDir, File attRelsDir) throws Throwable
+	                         File attModelDir, File attRelsDir, File attNormDir) throws Throwable
 	{
 		CollectionReader reader = CollectionReaderFactory.createCollectionReader(
 				SemEval2015CollectionReader.class,
@@ -171,7 +176,17 @@ public class TrainTestPipelineTaskC
 				attRelsDir.getPath(),
 				DefaultDataWriterFactory.PARAM_DATA_WRITER_CLASS_NAME,
 				LIBSVMStringOutcomeDataWriter.class));
-		
+
+
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+				AttributeNormalizer.class,
+				AttributeNormalizer.PARAM_IS_TRAINING,
+				true,
+				DefaultDataWriterFactory.PARAM_OUTPUT_DIRECTORY,
+				attNormDir.getPath(),
+				DefaultDataWriterFactory.PARAM_DATA_WRITER_CLASS_NAME,
+				LIBSVMStringOutcomeDataWriter.class));
+
 		if (!VERBOSE)
 		{ /* turn off logging */
 			@SuppressWarnings("unchecked")
@@ -187,12 +202,13 @@ public class TrainTestPipelineTaskC
 		Train.main(attModelDir);
 		if (SPAN_RESOLUTION) Train.main(relModelDir, "-c", "10", "-s", "0", "-t", "0");
 		Train.main(attRelsDir, "-c", "10", "-s", "0", "-t", "0");
+		Train.main(attNormDir, "-c", "10", "-s", "0", "-t", "0");
 
 		SemEval2015TaskCGoldAnnotator.writeMapToFile(SemEval2015TaskCGoldAnnotator.stringCUIMap, new File(cuiMapFile));
 	}
 
 	public static String test(Collection<File> files, File ddDir,
-	                          File relDir, File attDir, File attRelsDir) throws Throwable
+	                          File relDir, File attDir, File attRelsDir, File attNormDir) throws Throwable
 	{
 
 		CollectionReader reader = CollectionReaderFactory.createCollectionReader(
@@ -267,6 +283,13 @@ public class TrainTestPipelineTaskC
 				GenericJarClassifierFactory.PARAM_CLASSIFIER_JAR_PATH,
 				new File(attRelsDir, "model.jar").getPath()));
 
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+				AttributeNormalizer.class,
+				AttributeNormalizer.PARAM_IS_TRAINING,
+				false,
+				GenericJarClassifierFactory.PARAM_CLASSIFIER_JAR_PATH,
+				new File(attNormDir, "model.jar").getPath()));
+
 		if(USE_MI) {
 			builder.add(AnalysisEngineFactory.createPrimitiveDescription(MutualInformationAnnotator.class,
 					MutualInformationAnnotator.PARAM_MI_DATABASE_URL,
@@ -309,8 +332,12 @@ public class TrainTestPipelineTaskC
 	{
 
 		AnnotationStatistics<String> stats = new AnnotationStatistics<>();
+		AnnotationStatistics<String> normStats = new AnnotationStatistics<>();
+
 		Function<DiseaseDisorderAttribute, ?> annotationToSpan = AnnotationStatistics.annotationToSpan();
 		Function<DiseaseDisorderAttribute, String> annotationToOutcome = AnnotationStatistics.annotationToFeatureValue("attributeType");
+		Function<DiseaseDisorderAttribute, String> annotationToNorm = AnnotationStatistics.annotationToFeatureValue("norm");
+
 		double totalC = 0;
 		double totalT = 0;
 		double totalST = 0;
@@ -326,6 +353,8 @@ public class TrainTestPipelineTaskC
 			Collection<DiseaseDisorderAttribute> goldSpans = JCasUtil.select(goldView, DiseaseDisorderAttribute.class);
 			Collection<DiseaseDisorderAttribute> systemSpans = JCasUtil.select(systemView, DiseaseDisorderAttribute.class);
 			stats.add(goldSpans, systemSpans, annotationToSpan, annotationToOutcome);
+			normStats.add(goldSpans, systemSpans, annotationToSpan, annotationToNorm);
+
 			List<DisorderRelation> goldRelations = new ArrayList<>(JCasUtil.select(goldView, DisorderRelation.class));
 			List<DisorderRelation> sysRelations = new ArrayList<>(JCasUtil.select(systemView, DisorderRelation.class));
 			for (DisorderRelation rel : sysRelations)
@@ -388,6 +417,8 @@ public class TrainTestPipelineTaskC
 		double f1 = (2 * precision * recall) / (precision + recall);
 		results.append("Overall\t" + recall + "\t" + precision + "\t" + f1 + "\t" + totalT + "\t" + totalST + "\t" + totalC + "\n");
 		results.append("\t").append(stats.toString());
+		results.append("\t").append(normStats.toString());
+
 		return results.toString();
 	}
 
