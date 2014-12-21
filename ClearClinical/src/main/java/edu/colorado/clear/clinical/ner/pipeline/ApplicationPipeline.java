@@ -4,6 +4,7 @@ import edu.colorado.clear.clinical.ner.annotators.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.uab.ccts.nlp.uima.annotator.SegmentRegexAnnotator;
+import edu.uab.ccts.nlp.uima.annotator.SemEval2015Task2Consumer;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.assertion.medfacts.cleartk.PolarityCleartkAnalysisEngine;
@@ -57,7 +58,8 @@ public class ApplicationPipeline
 		File relModelDir = new File(TrainTestPipeline.relModels);
 
 		File trainDir = new File(TrainTestPipeline.semeval_train);
-		File testDir = new File(TrainTestPipeline.semeval_devel);
+		//File testDir = new File(TrainTestPipeline.semeval_devel);
+		File testDir = new File(TrainTestPipeline.semeval_test);
 
 		Collection<File> trainFiles = FileUtils.listFiles(trainDir,
 				trainExtension, true);
@@ -69,7 +71,8 @@ public class ApplicationPipeline
 			if(arg.equalsIgnoreCase("-skiptraining")) SKIP_TRAINING=true;
 		}
 		
-		TrainTestPipeline.train(trainFiles, crfModelDir, relModelDir);
+		if(!SKIP_TRAINING) TrainTestPipeline.train(trainFiles, crfModelDir, relModelDir);
+		else { System.out.println("Skipping training"); }
 		apply(testFiles, crfModelDir, relModelDir);
 	}
 
@@ -127,6 +130,9 @@ public class ApplicationPipeline
 					SpanPostProcessorAnnotator.PARAM_CUI_FILE_PATH,
 					TrainTestPipeline.resourceDirPath + "cuis"));
 		}
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
+				SemEval2015Task2Consumer.PARAM_OUTPUT_DIRECTORY,
+				"template_results"));
 
 		if (!TrainTestPipeline.VERBOSE) TrainTestPipeline.suppressLogging();
 

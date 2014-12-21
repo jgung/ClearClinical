@@ -3,7 +3,9 @@ package edu.colorado.clear.clinical.ner.annotators;
 import com.google.common.collect.Lists;
 
 import edu.colorado.clear.clinical.ner.features.relfeatures.*;
+import edu.colorado.clear.clinical.ner.pipeline.TrainTestPipelineTaskC;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
+import edu.uab.ccts.nlp.uima.annotator.MutualInformationAnnotator;
 
 import org.apache.ctakes.typesystem.type.relation.RelationArgument;
 import org.apache.ctakes.typesystem.type.textspan.Sentence;
@@ -17,13 +19,14 @@ import org.cleartk.classifier.CleartkAnnotator;
 import org.cleartk.classifier.CleartkProcessingException;
 import org.cleartk.classifier.Feature;
 import org.cleartk.classifier.Instance;
-import org.cleartk.score.type.ScoredAnnotation;
 import org.cleartk.semeval2015.type.DiseaseDisorderAttribute;
 import org.cleartk.semeval2015.type.DisorderRelation;
 import org.cleartk.semeval2015.type.DisorderSpan;
 import org.uimafit.descriptor.ConfigurationParameter;
 import org.uimafit.util.JCasUtil;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.*;
 
 /* Adapted from the cTAKES relation extractor */
@@ -40,8 +43,13 @@ public class AttributeRelationAnnotator extends CleartkAnnotator<String>
 			description = "probability that a negative example should be retained for training")
 	protected double probabilityOfKeepingANegativeExample = 1;
 	protected Random coin = new Random(0);
+	private static Connection dbConnection = null;
 	private List<RelationFeaturesExtractor> featureExtractors = this.getFeatureExtractors();
 	private Class<? extends Annotation> coveringClass = Sentence.class;
+	
+	static {
+		dbConnection = TrainTestPipelineTaskC.dbConnection;
+	}
 
 	public static void createRelation(
 			JCas jCas,
@@ -73,15 +81,18 @@ public class AttributeRelationAnnotator extends CleartkAnnotator<String>
 		relation.addToIndexes();
 	}
 
+
+	
 	protected List<RelationFeaturesExtractor> getFeatureExtractors()
 	{
+		//dbConnection = getDatabaseConnection();
 		return Lists.newArrayList(
 				new TokenFeaturesExtractor(),
 				new PartOfSpeechFeaturesExtractor(),
 				new PhraseChunkingExtractor(),
 				new DependencyTreeFeaturesExtractor(),
 				new DependencyPathFeaturesExtractor(),
-				//new ScoredDistanceFeaturesExtractor("MutualInf",ScoredAnnotation.class),
+				new ScoredDistanceFeaturesExtractor(dbConnection),
 				new NamedEntityFeaturesExtractor());
 	}
 
@@ -160,6 +171,9 @@ public class AttributeRelationAnnotator extends CleartkAnnotator<String>
 				}
 			}
 		}
+		//try {
+		//	if(dbConnection!=null) { System.out.println("Closing dbConnection for "+this.hashCode()); dbConnection.close(); } 
+		//} catch (Exception e) { e.printStackTrace(); }
 	}
 
 	protected String getRelationCategory(

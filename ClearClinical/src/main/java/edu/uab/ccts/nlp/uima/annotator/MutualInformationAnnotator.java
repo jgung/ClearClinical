@@ -33,7 +33,7 @@ import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 
 
-	public static final String default_db_name = "small";
+	public static final String default_db_name = "tiny";
 	public static final String default_db_path = "src/main/resources/hsqldb/"+default_db_name;
 	public static final String default_db_url = "jdbc:hsqldb:file:"+default_db_path;
 	public static final String default_db_user = "SA";
@@ -103,14 +103,8 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			name = PARAM_IS_CONSTRUCTION,
 			description = "Indicates whether this annotator should construct a database")
 	private boolean isConstruction = false;
-
+	private static Integer db_unitoken_count = null, db_bitoken_count = null;
 	
-
-	private int global_observed_unigrams=0, global_observed_bigrams=0;
-
-
-	public int getGlobalObservedUnigrams(){ return global_observed_unigrams; }
-	public int getGlobalObservedBigrams(){ return global_observed_bigrams; }
 
 	@Override
 	public void process(JCas jCas) throws AnalysisEngineProcessException {
@@ -145,7 +139,7 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			docid = di.getDocumentID();
 		}
 		*/
-		if(isConstruction) {
+		if(isConstruction) { //Should be is training
 			//Writes to our Mutual Information Database (HSQLDB)
 			Connection _dbConnection = null;
 			try {
@@ -220,63 +214,64 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 		} else {
 			//Not making database, create the required MutualInformation Annotations
 			// with statistics
-			Connection _dbConnection;
-			ResultSet resultset;
-			try {
-				//_dbConnection = DriverManager.getConnection(miDatabaseUrl, miDatabaseUser, miDatabasePassword);
-				_dbConnection = DriverManager.getConnection(miDatabaseUrl);
-				Statement st = _dbConnection.createStatement();
-				String query ="SELECT SUM(OBSERVED) FROM NLP_UNIGRAM";
-				resultset = (ResultSet) st.executeQuery(query);
-				while(resultset.next()){
-					global_observed_unigrams = resultset.getInt(1);
-				}
-				resultset.close();
-				query ="SELECT SUM(OBSERVED) FROM NLP_BIGRAM";
-				resultset = (ResultSet) st.executeQuery(query);
-				while(resultset.next()){
-					global_observed_bigrams = resultset.getInt(1);
-				}
-				Integer all_unigram_count = getTokenTotals(_dbConnection, "NLP_UNIGRAM");
-				Integer all_bigram_count = getTokenTotals(_dbConnection, "NLP_BIGRAM");
-				for (BaseToken t : JCasUtil.select(jCas, BaseToken.class)){
-					BaseToken next = JCasUtil.selectFollowing(jCas, BaseToken.class, t, 1).remove(0);
-					String first = t.getCoveredText();
-					String second = next.getCoveredText();
-					Integer first_count = getOneTokenCount(_dbConnection, "NLP_UNIGRAM", first);
-					Integer second_count = getOneTokenCount(_dbConnection, "NLP_UNIGRAM", second);
-					Integer jointcount = getBiTokenCount(_dbConnection, "NLP_BIGRAM", first, second);
-					TokenMutualInformation tkmi = null;
-					if(isTrain) tkmi = new TokenMutualInformation(goldView);
-					else tkmi = new TokenMutualInformation(appView);
-					tkmi.setBegin(t.getBegin());
-					tkmi.setEnd(t.getEnd());
-					tkmi.setAnnotation_x(first);
-					tkmi.setAnnotation_y(second);
-					tkmi.setCount_x(first_count);
-					tkmi.setCount_y(second_count);
-					tkmi.setCount_xy(jointcount);
-					double mi = Math.log(
-							((double)jointcount/all_bigram_count)
-							/
-							(
-							((double)first_count/all_unigram_count)*
-							((double)second_count/all_unigram_count)
-							)
-					);
-					tkmi.setScore(mi);
-					tkmi.addToIndexes();
-				}
-				_dbConnection.close();
-
-			} catch (Exception e)
-			{
-				this.getContext().getLogger().log(Level.SEVERE,"Failed to get connection to database");
-				e.printStackTrace();
-			}
-
+			//populateCasWithMITokens(jCas, appView, goldView);
+			this.getContext().getLogger().log(Level.FINER,"No longer populating CAS");
 		}
 
+	}
+	public void populateCasWithMITokens(JCas jCas, JCas appView, JCas goldView) {
+		Connection _dbConnection;
+		try {
+			//_dbConnection = DriverManager.getConnection(miDatabaseUrl, miDatabaseUser, miDatabasePassword);
+			_dbConnection = DriverManager.getConnection(miDatabaseUrl);
+			Integer all_unigram_count = getTokenTotals(_dbConnection, "NLP_UNIGRAM");
+			Integer all_bigram_count = getTokenTotals(_dbConnection, "NLP_BIGRAM");
+			for (BaseToken t : JCasUtil.select(jCas, BaseToken.class)){
+				BaseToken next = JCasUtil.selectFollowing(jCas, BaseToken.class, t, 1).remove(0);
+				String first = t.getCoveredText();
+				String second = next.getCoveredText();
+				Integer first_count = getOneTokenCount(_dbConnection, "NLP_UNIGRAM", first);
+				Integer second_count = getOneTokenCount(_dbConnection, "NLP_UNIGRAM", second);
+				Integer jointcount = getBiTokenCount(_dbConnection, "NLP_BIGRAM", first, second);
+				TokenMutualInformation tkmi = null;
+				if(isTrain) tkmi = new TokenMutualInformation(goldView);
+				else tkmi = new TokenMutualInformation(appView);
+				tkmi.setBegin(t.getBegin());
+				tkmi.setEnd(t.getEnd());
+				tkmi.setAnnotation_x(first);
+				tkmi.setAnnotation_y(second);
+				tkmi.setCount_x(first_count);
+				tkmi.setCount_y(second_count);
+				tkmi.setCount_xy(jointcount);
+				double mi = calculateMutualInformation(all_unigram_count,
+						all_bigram_count, first_count, second_count,
+						jointcount);
+				tkmi.setScore(mi);
+				tkmi.addToIndexes();
+			}
+			_dbConnection.close();
+
+		} catch (Exception e)
+		{
+			this.getContext().getLogger().log(Level.SEVERE,"Failed to get connection to database");
+			e.printStackTrace();
+		}
+	}
+	public static double calculateMutualInformation(Integer all_unigram_count,
+			Integer all_bigram_count, Integer first_count,
+			Integer second_count, Integer jointcount) {
+		System.out.println("ALL UNIGRAM:"+all_unigram_count+" ALL BIGRAM:"+all_bigram_count
+				+" FIRST_COUNT:"+first_count+" SECOND COUNT"+second_count+" JOINT COUNT:"+jointcount);
+		if(jointcount==0) return 0.0; //Never seen before, don't want ClearTK to get - Infinity
+		double mi = Math.log(
+				((double)jointcount/all_bigram_count)
+				/
+				(
+				((double)first_count/all_unigram_count)*
+				((double)second_count/all_unigram_count)
+				)
+		);
+		return mi;
 	}
 	private void getTokenCounts(JCas jcas,
 			Hashtable<String, Integer> unigram_counts,
@@ -306,7 +301,7 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 	}
 
 
-	private int getTokenTotals(Connection conn, String table_name){
+	public static int getTokenTotals(Connection conn, String table_name){
 		Integer count = 0;
 		try {
 			String ucountsql = "SELECT SUM(OBSERVED) FROM "+table_name;
@@ -321,7 +316,7 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 	}
 
 
-	private int getOneTokenCount(Connection conn, String table_name, String token){
+	public static int getOneTokenCount(Connection conn, String table_name, String token){
 		Integer count = 0;
 		String ucountsql = null;
 		String clean = "";
@@ -343,7 +338,7 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 
 
 
-	private int getBiTokenCount(Connection conn, String table_name, String first, String second){
+	public static int getBiTokenCount(Connection conn, String table_name, String first, String second){
 		Integer count = 0;
 		String f1="",s2="";
 		try {
@@ -378,7 +373,6 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			Statement st = _dbConnection.createStatement();
 			st.execute(unigram_table_create);
 			st.execute(bigram_table_create);
-			//st.execute(unigram_index);
 			st.execute(bigram_index1);
 			st.execute(bigram_index2);
 			_dbConnection.close();
