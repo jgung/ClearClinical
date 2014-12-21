@@ -8,6 +8,7 @@ import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.cleartk.classifier.CleartkSequenceAnnotator;
 import org.cleartk.classifier.Feature;
@@ -159,6 +160,13 @@ public class AttributeAnnotator extends CleartkSequenceAnnotator<String>
 						sentence.getBegin(), sentence.getEnd());
 				List<String> outcomes = this.classifier.classify(featureLists);
 				this.chunking.createChunks(appView, cleanTokens, outcomes);
+				for (DiseaseDisorderAttribute att: JCasUtil.selectCovered(appView, DiseaseDisorderAttribute.class,
+						sentence.getBegin(), sentence.getEnd()))
+				{
+					FSArray attSpans = new FSArray(jCas, 1);
+					attSpans.set(0, att);
+					att.setSpans(attSpans);
+				}
 			}
 		}
 	}

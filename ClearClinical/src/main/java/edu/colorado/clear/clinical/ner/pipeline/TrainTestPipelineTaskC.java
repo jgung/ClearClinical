@@ -67,7 +67,7 @@ public class TrainTestPipelineTaskC
 	public static String attNormModels = "target/models/attNorm";
 
 	public static boolean SPAN_RESOLUTION = true;
-	public static boolean VERBOSE = false;
+	public static boolean VERBOSE = true;
 	public static boolean USE_YTEX = false;
 	public static boolean USE_MI = false;
 	public static boolean SKIP_TRAINING = false;
@@ -225,9 +225,7 @@ public class TrainTestPipelineTaskC
 				SemEval2015TaskCGoldAnnotator.PARAM_CUI_MAP,
 				TrainTestPipeline.cuiMapFile));
 
-		builder.add(AnalysisEngineFactory.createPrimitiveDescription(DocIDAnnotator.class,
-				DocIDAnnotator.PARAM_CUI_MAP_PATH,
-				cuiMapFile));
+
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(AbbreviationAnnotator.class,
 				AbbreviationAnnotator.PARAM_FILE,
 				new File(abbrFile)));
@@ -245,6 +243,10 @@ public class TrainTestPipelineTaskC
 				SemEval2015Constants.APP_VIEW));
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				CopySentencesAndTokensAnnotator.class));
+
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(DocIDAnnotator.class,
+				DocIDAnnotator.PARAM_CUI_MAP_PATH,
+				cuiMapFile));
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				DisorderSpanAnnotator.class,
@@ -268,12 +270,10 @@ public class TrainTestPipelineTaskC
 					false,
 					GenericJarClassifierFactory.PARAM_CLASSIFIER_JAR_PATH,
 					new File(relDir, "model.jar").getPath()));
-//			builder.add(AnalysisEngineFactory.createPrimitiveDescription(
-//					SpanPostProcessorAnnotator.class,
-//					SpanPostProcessorAnnotator.PARAM_OUT_FILE_PATH,
-//					TrainTestPipeline.resourceDirPath + "results",
-//					SpanPostProcessorAnnotator.PARAM_CUI_FILE_PATH,
-//					TrainTestPipeline.resourceDirPath + "cuis"));
+			builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+					SpanPostProcessorAnnotator.class,
+					SpanPostProcessorAnnotator.PARAM_CUI_FILE_PATH,
+					TrainTestPipeline.resourceDirPath + "cuis"));
 		}
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
