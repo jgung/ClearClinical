@@ -54,8 +54,8 @@ public class TrainTestPipelineTaskC
 	//public static String semeval_devel_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/devel";
 	//public static String mini_devel_c = resourceDirPath + "semeval-2015-task-14/subtask-c/data/devel";
 	//Directory format has changed with the new data file, new format is below. Minidev needs to be manually created if used.
-	public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/data/trainSubset";
-	public static String semeval_devel_c = resourceDirPath + "semeval-2015-task-14/data/develSubset";
+	public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/data/train";
+	public static String semeval_devel_c = resourceDirPath + "semeval-2015-task-14/data/devel";
 	public static String mini_devel_c = resourceDirPath + "semeval-2015-task-14/data/minidev";
 
 	public static String abbrFile = resourceDirPath + "data/abbr.txt";
