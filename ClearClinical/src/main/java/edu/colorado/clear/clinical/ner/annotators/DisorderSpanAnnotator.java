@@ -63,8 +63,8 @@ public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
 			}
 			features.addAll(annotator.extractor.extract(jCas, token));
 			features.addAll(annotator.contextExtractor.extract(jCas, token));
-			features.addAll(annotator.bagExtractor.extract(jCas, token));
-			features.addAll(annotator.umlsExtractor.extract(jCas, token));
+//			features.addAll(annotator.bagExtractor.extract(jCas, token));
+//			features.addAll(annotator.umlsExtractor.extract(jCas, token));
 //			features.addAll(annotator.umlsContextExtractor.extract(jCas, token));
 			features.add(new Feature("DISCOURSE_SECTION" + annotator.discourseSection, token.getNormalizedForm()));
 			features.add(new Feature("DOC_TYPE" + docType, token.getNormalizedForm()));
@@ -109,7 +109,8 @@ public class DisorderSpanAnnotator extends CleartkSequenceAnnotator<String>
 				BaseToken.class,
 				this.extractor,
 				new Preceding(1),
-				new Following(1));
+				new Following(1)
+		);
 
 		this.umlsExtractor = new UMLSFeaturesExtractor();
 
