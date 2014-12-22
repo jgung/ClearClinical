@@ -123,7 +123,7 @@ public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 			DisorderSpan ds = (DisorderSpan) spans.get(i);
 			output_lines.append(ds.getBegin() + "-" + ds.getEnd());
 			if (i != spans.size() - 1) output_lines.append(",");
-			System.out.print(ds.getCoveredText() + "\t");
+//			System.out.print(ds.getCoveredText() + "\t");
 		}
 		output_lines.append(SemEval2015Constants.OUTPUT_SEPERATOR);
 		output_lines.append(dd.getCui());
@@ -139,7 +139,7 @@ public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 		output_lines.append(fetchAttributeString(atts, SemEval2015Constants.BODY_RELATION));
 		//output_lines.append(fetchAttributeString(atts, SemEval2015Constants.DOCTIME_RELATION));
 		//output_lines.append(fetchAttributeString(atts, SemEval2015Constants.TEMPORAL_RELATION));
-		System.out.println();
+//		System.out.println();
 		return output_lines.toString();
 	}
 
@@ -163,7 +163,7 @@ public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 						FSArray attspans = dda.getSpans();
 						if (attspans == null)
 						{
-							System.out.println(dda.getBegin() + " to " + dda.getEnd() + " has no atts!!!!");
+//							System.out.println(dda.getBegin() + " to " + dda.getEnd() + " has no atts!!!!");
 							continue;
 						}
 						for (int j = 0; j < attspans.size(); j++)
@@ -174,7 +174,7 @@ public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 							{
 								cue = cue + "," + ds.getBegin() + "-" + ds.getEnd();
 							}
-							System.out.print(ds.getCoveredText() + "\t");
+//							System.out.print(ds.getCoveredText() + "\t");
 
 						}
 						String out = norm + SemEval2015Constants.OUTPUT_SEPERATOR + cue;
