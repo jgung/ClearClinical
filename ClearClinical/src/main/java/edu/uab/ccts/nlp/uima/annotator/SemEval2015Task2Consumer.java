@@ -181,6 +181,8 @@ public class SemEval2015Task2Consumer extends JCasAnnotator_ImplBase {
 //						if (type.equals(SemEval2015Constants.BODY_RELATION))
 							out += SemEval2015Constants.OUTPUT_SEPERATOR;
 						return out;
+					} else if (!type.equals(SemEval2015Constants.BODY_RELATION)){
+						return norm;
 					} else
 					{
 						return norm + SemEval2015Constants.OUTPUT_SEPERATOR;

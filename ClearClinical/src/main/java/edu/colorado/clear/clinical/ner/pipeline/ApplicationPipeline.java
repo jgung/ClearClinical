@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.assertion.medfacts.cleartk.PolarityCleartkAnalysisEngine;
 import org.apache.ctakes.chunker.ae.Chunker;
 import org.apache.ctakes.chunker.ae.adjuster.ChunkAdjuster;
+import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.CopyNPChunksToLookupWindowAnnotations;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.RemoveEnclosedLookupWindows;
 import org.apache.ctakes.contexttokenizer.ae.ContextDependentTokenizerAnnotator;
@@ -47,6 +48,7 @@ import java.util.Collection;
 public class ApplicationPipeline
 {
 	public static boolean USE_YTEX = false;
+	public static boolean USE_MI = false;
 	public static boolean SKIP_TRAINING = false;
 	
 	public static void main(String... args) throws Throwable
@@ -68,6 +70,7 @@ public class ApplicationPipeline
 
 		for(String arg:args){
 			if(arg.equalsIgnoreCase("-ytex")) USE_YTEX=true;
+			if(arg.equalsIgnoreCase("-mi")) USE_MI=true;
 			if(arg.equalsIgnoreCase("-skiptraining")) SKIP_TRAINING=true;
 		}
 		
@@ -83,9 +86,11 @@ public class ApplicationPipeline
 		AggregateBuilder builder = new AggregateBuilder();
 		builder.add(UriToDocumentTextAnnotator.getDescription());
 
-		//Replace default pipeline
-		//builder.add(ClinicalPipelineFactory.getDefaultPipeline());
-		builder.add(getClearDefaultPipeline(USE_YTEX));
+		if(USE_YTEX) {
+			builder.add(getClearDefaultPipeline());
+		} else {
+			builder.add(org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.getDefaultPipeline());
+		}
 		
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(DocIDAnnotator.class,
 				DocIDAnnotator.PARAM_CUI_MAP_PATH,
@@ -147,7 +152,7 @@ public class ApplicationPipeline
 	   * -add rule-based annotator of UAB rules for CUI mapping
 	   * -add appropriate output (database, text files) 
 	   */
-	  public static AnalysisEngineDescription getClearDefaultPipeline(boolean use_ytex) throws ResourceInitializationException{
+	  public static AnalysisEngineDescription getClearDefaultPipeline() throws ResourceInitializationException{
 		    AggregateBuilder builder = new AggregateBuilder();
 		    //builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
 		    
@@ -179,7 +184,7 @@ public class ApplicationPipeline
 		    
 		    builder.add(UmlsDictionaryLookupAnnotator.createAnnotatorDescription());
 	
-		    if(use_ytex) builder.add(AnalysisEngineFactory.createPrimitiveDescription(SenseDisambiguatorAnnotator.class));
+		    builder.add(AnalysisEngineFactory.createPrimitiveDescription(SenseDisambiguatorAnnotator.class));
 			
 		    
 		    builder.add(ClearNLPDependencyParserAE.createAnnotatorDescription());

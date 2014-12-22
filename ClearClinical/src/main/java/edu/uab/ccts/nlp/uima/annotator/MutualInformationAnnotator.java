@@ -98,19 +98,11 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			description = "Indicates whether this annotator should operate in training mode")
 	private boolean isTrain = true;
 	
-	public static final String PARAM_IS_CONSTRUCTION = "isConstruction";
-	@ConfigurationParameter(
-			name = PARAM_IS_CONSTRUCTION,
-			description = "Indicates whether this annotator should construct a database")
-	private boolean isConstruction = false;
-	private static Integer db_unitoken_count = null, db_bitoken_count = null;
-	
 
 	@Override
 	public void process(JCas jCas) throws AnalysisEngineProcessException {
 		String message = "Input MI Database URL was:"+miDatabaseUrl;
-		if(isTrain) message+=" ; training...";
-		if(isConstruction) message+= " ; constructing MI database....";
+		if(isTrain) message+=" ; training (building MI database)...";
 		if(VERBOSE) { System.out.println(message); System.out.flush(); }
 		this.getContext().getLogger().log(Level.FINE,"Database User was:"+miDatabaseUser);
 		this.getContext().getLogger().log(Level.FINE,"Database Password was:"+miDatabasePassword);
@@ -139,7 +131,7 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 			docid = di.getDocumentID();
 		}
 		*/
-		if(isConstruction) { //Should be is training
+		if(isTrain) {
 			//Writes to our Mutual Information Database (HSQLDB)
 			Connection _dbConnection = null;
 			try {
@@ -260,7 +252,7 @@ public class MutualInformationAnnotator extends JCasAnnotator_ImplBase {
 	public static double calculateMutualInformation(Integer all_unigram_count,
 			Integer all_bigram_count, Integer first_count,
 			Integer second_count, Integer jointcount) {
-		System.out.println("ALL UNIGRAM:"+all_unigram_count+" ALL BIGRAM:"+all_bigram_count
+		if(VERBOSE)System.out.println("ALL UNIGRAM:"+all_unigram_count+" ALL BIGRAM:"+all_bigram_count
 				+" FIRST_COUNT:"+first_count+" SECOND COUNT"+second_count+" JOINT COUNT:"+jointcount);
 		if(jointcount==0) return 0.0; //Never seen before, don't want ClearTK to get - Infinity
 		double mi = Math.log(

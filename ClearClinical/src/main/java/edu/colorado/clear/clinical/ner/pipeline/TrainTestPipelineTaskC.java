@@ -302,10 +302,8 @@ public class TrainTestPipelineTaskC
 					MutualInformationAnnotator.default_db_user,
 					MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
 					MutualInformationAnnotator.default_db_password,
-					MutualInformationAnnotator.PARAM_IS_CONSTRUCTION,
-					false,
 					MutualInformationAnnotator.PARAM_IS_TRAINING,
-					true));
+					false));
 		}
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
@@ -356,7 +354,7 @@ public class TrainTestPipelineTaskC
 		for (JCas jCas : new JCasIterable(reader, engine))
 		{
 			JCas goldView = jCas.getView(SemEval2015Constants.GOLD_VIEW);
-			JCas systemView = jCas.getView(SemEval2015Constants.APP_VIEW);
+			JCas systemView = jCas.getView(SemEval2015Constants.APP_VIEW);//FIXME No sofaFS with name APPLICATION_VIEW found.
 			Collection<DiseaseDisorderAttribute> goldSpans = JCasUtil.select(goldView, DiseaseDisorderAttribute.class);
 			Collection<DiseaseDisorderAttribute> systemSpans = JCasUtil.select(systemView, DiseaseDisorderAttribute.class);
 			Collection<DisorderSpan> goldDisorderSpans = JCasUtil.select(goldView, DisorderSpan.class);

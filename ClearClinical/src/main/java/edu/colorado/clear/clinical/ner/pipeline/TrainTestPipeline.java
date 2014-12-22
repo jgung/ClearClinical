@@ -105,7 +105,11 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ApplicationPipeline.getClearDefaultPipeline(USE_YTEX));
+		if(USE_YTEX) {
+			builder.add(ApplicationPipeline.getClearDefaultPipeline());
+		} else {
+			builder.add(org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.getDefaultPipeline());
+		}
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
 				true,
@@ -162,7 +166,11 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ApplicationPipeline.getClearDefaultPipeline(USE_YTEX));
+		if(USE_YTEX) {
+			builder.add(ApplicationPipeline.getClearDefaultPipeline());
+		} else {
+			builder.add(org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.getDefaultPipeline());
+		}
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
 				false,

@@ -28,8 +28,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This should construct a MutualInformationCorpus on unsupervised data
- *
+ * This constructs a MutualInformationCorpus on unsupervised data
+ * Should be smarter and not just use adjacent BaseTokens
  */
 public class MutualInformationPipeline
 {
@@ -74,8 +74,6 @@ public class MutualInformationPipeline
 				MutualInformationAnnotator.default_db_user,
 				MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
 				MutualInformationAnnotator.default_db_password,
-				MutualInformationAnnotator.PARAM_IS_CONSTRUCTION,
-				true,
 				MutualInformationAnnotator.PARAM_IS_TRAINING,
 				true));
 
