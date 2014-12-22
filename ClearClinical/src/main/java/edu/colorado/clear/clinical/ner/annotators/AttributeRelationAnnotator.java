@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 import edu.colorado.clear.clinical.ner.features.relfeatures.*;
 import edu.colorado.clear.clinical.ner.pipeline.TrainTestPipelineTaskC;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
-import edu.uab.ccts.nlp.uima.annotator.MutualInformationAnnotator;
 
 import org.apache.ctakes.typesystem.type.relation.RelationArgument;
 import org.apache.ctakes.typesystem.type.textspan.Sentence;
@@ -26,7 +25,6 @@ import org.uimafit.descriptor.ConfigurationParameter;
 import org.uimafit.util.JCasUtil;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.*;
 
 /* Adapted from the cTAKES relation extractor */
@@ -92,7 +90,7 @@ public class AttributeRelationAnnotator extends CleartkAnnotator<String>
 				new PhraseChunkingExtractor(),
 				new DependencyTreeFeaturesExtractor(),
 				new DependencyPathFeaturesExtractor(),
-				new ScoredDistanceFeaturesExtractor(dbConnection),
+				new MutualInformationFeaturesExtractor(dbConnection),
 				new NamedEntityFeaturesExtractor());
 	}
 
