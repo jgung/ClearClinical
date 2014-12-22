@@ -1,10 +1,8 @@
 package edu.colorado.clear.clinical.ner.annotators;
 
-import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.UTSApiUtil;
 import gov.nih.nlm.umls.uts.webservice.UiLabel;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.ctakes.typesystem.type.refsem.OntologyConcept;
@@ -20,33 +18,25 @@ import org.apache.uima.cas.FeatureStructure;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.cleartk.semeval2015.type.DiseaseDisorder;
 import org.cleartk.semeval2015.type.DisorderSpan;
 import org.cleartk.semeval2015.type.DisorderSpanRelation;
-import org.cleartk.util.ViewURIUtil;
 import org.uimafit.component.JCasAnnotator_ImplBase;
 import org.uimafit.descriptor.ConfigurationParameter;
 import org.uimafit.util.JCasUtil;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 {
-
-	public static final String PARAM_OUT_FILE_PATH = "outFilePath";
 	public static final String PARAM_CUI_FILE_PATH = "cuiFilePath";
 	public static final String PARAM_USE_YTEX = "useYtex";
 	private static final Log log = LogFactory
 			.getLog(SpanPostProcessorAnnotator.class);
-	public static String DISEASE_DISORDER = "Disease_Disorder";
 	public static String CUI_LESS = "CUI-less";
-	public static String PIPE = "||";
 	public static boolean VERBOSE = false;
-	@ConfigurationParameter(
-			name = PARAM_OUT_FILE_PATH,
-			description = "output file path")
-	protected String outFilePath = null;
 	@ConfigurationParameter(
 			name = PARAM_CUI_FILE_PATH,
 			description = "cui file path")
@@ -78,10 +68,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 
 	public void process(JCas jCas) throws AnalysisEngineProcessException
 	{
-		String fileName = new File(ViewURIUtil.getURI(jCas).getPath()).getName();
-		String docID = ((DocumentID) JCasUtil.select(jCas, DocumentID.class).toArray()[0]).getDocumentID();
 
-		log.info("\t\tSpan post processing: " + docID);
 
 		JCas applicationView = null;
 		try
@@ -91,10 +78,12 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 		{
 			e.printStackTrace();
 		}
+		String docID = ((DocumentID) JCasUtil.select(applicationView, DocumentID.class).toArray()[0]).getDocumentID();
+		log.info("\t\tSpan post processing: " + docID);
+
 
 		Collection<DisorderSpanRelation> rels = JCasUtil.select(applicationView, DisorderSpanRelation.class);
 		List<DisorderSpan> usedSpans = new ArrayList<>();
-		List<SortableDisorder> disorders = new ArrayList<>();
 
 		for (BinaryTextRelation rel : rels)
 		{
@@ -127,13 +116,22 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 				}
 			}
 
+			DiseaseDisorder disorder = new DiseaseDisorder(applicationView);
+			FSArray relSpans = new FSArray(applicationView, 2);
+			relSpans.set(0, arg1);
+			relSpans.set(1, arg2);
+			disorder.setSpans(relSpans);
+			disorder.setBegin(arg1.getBegin());
+			disorder.setEnd(arg2.getEnd());
+			disorder.addToIndexes();
+
 			if (add)
 			{
 				arg1.setCui(cui);
 				arg2.setCui(cui);
 				usedSpans.add(arg1);
 				usedSpans.add(arg2);
-				disorders.add(new SortableDisorder(Arrays.asList(arg1, arg2)));
+				disorder.setCui(cui);
 			}
 		}
 
@@ -162,7 +160,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 					List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
 					if (list.size() > 0)
 					{
-						cui = list.get(0).getLabel();
+						cui = list.get(0).getUi();
 						log.debug("UTS CUI:" + list.get(0).getUi() + " Label:" + cui);
 						add = true;
 					}
@@ -198,95 +196,23 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 						}
 					}
 				}
+				DiseaseDisorder disorder = new DiseaseDisorder(applicationView);
+				FSArray relSpans = new FSArray(applicationView, 1);
+				relSpans.set(0, span);
+				disorder.setSpans(relSpans);
+				disorder.setBegin(span.getBegin());
+				disorder.setEnd(span.getEnd());
+				disorder.addToIndexes();
 				if (add)
 				{
+					disorder.setCui(cui);
 					span.setCui(cui);
-					disorders.add(new SortableDisorder(Arrays.asList(span)));
 				}
 			}
 		}
 
-		/* Sort by increasing span index */
-		Collections.sort(disorders);
-		/* Write spans to pipe format */
-		StringBuilder outFile = new StringBuilder();
-		StringBuilder cuiFile = new StringBuilder();
-		for (SortableDisorder d : disorders)
-		{
-			outFile.append(d.toString(docID));
-			cuiFile.append(d.getText()).append("\n");
-			if (VERBOSE)
-			{
-				if (d.spans.size() > 1)
-					System.out.println("Disjoint Span:\t" + d.getText());
-				else
-					System.out.println(d.getText());
-			}
-		}
-
-		fileName = fileName.replace(SemEval2015CollectionReader.TEXT_SUFFIX, SemEval2015CollectionReader.PIPE_SUFFIX);
-
-		try
-		{
-			FileUtils.writeStringToFile(new File(cuiFilePath + File.separator + fileName), outFile.toString());
-			FileUtils.writeStringToFile(new File(outFilePath + File.separator + fileName), cuiFile.toString());
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-
 	}
 
-	public static class SortableDisorder implements Comparable<SortableDisorder>
-	{
-
-		protected List<DisorderSpan> spans;
-		protected int start;
-		protected int end;
-		protected String text;
-
-		public SortableDisorder(List<DisorderSpan> d)
-		{
-			this.spans = d;
-			start = d.get(0).getBegin();
-			end = d.get(0).getEnd();
-			this.text = "";
-			for (DisorderSpan span : spans)
-			{
-				if (span.getBegin() < start)
-					start = span.getBegin();
-				if (span.getEnd() > end)
-					end = span.getEnd();
-				this.text += span.getCoveredText().trim().toLowerCase().replace("\\s", " ") + " ";
-			}
-			this.text = this.text.trim();
-		}
-
-		public int compareTo(SortableDisorder o)
-		{
-			if (o.start == this.start)
-				return this.end - o.end;
-
-			return this.start - o.start;
-		}
-
-		public String toString(String docId)
-		{
-			String spanText = "";
-			for (DisorderSpan s : spans)
-			{
-				spanText += PIPE + s.getBegin() + PIPE + s.getEnd();
-			}
-			String cui = getCUI(text);
-			return docId + PIPE + DISEASE_DISORDER + PIPE + cui + spanText + "\n";
-		}
-
-		public String getText()
-		{
-			return text;
-		}
-
-	}
 
 
 }

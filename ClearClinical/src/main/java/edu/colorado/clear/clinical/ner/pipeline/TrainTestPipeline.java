@@ -206,8 +206,6 @@ public class TrainTestPipeline
 					new File(relDir, "model.jar").getPath()));
 			builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 					SpanPostProcessorAnnotator.class,
-					SpanPostProcessorAnnotator.PARAM_OUT_FILE_PATH,
-					TrainTestPipeline.resourceDirPath + "results",
 					SpanPostProcessorAnnotator.PARAM_CUI_FILE_PATH,
 					TrainTestPipeline.resourceDirPath + "cuis"));
 		}

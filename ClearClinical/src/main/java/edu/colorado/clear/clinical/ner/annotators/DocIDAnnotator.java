@@ -1,10 +1,11 @@
 package edu.colorado.clear.clinical.ner.annotators;
 
-import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
+import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.typesystem.type.structured.DocumentID;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
+import org.apache.uima.cas.CASException;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.cleartk.util.ViewURIUtil;
@@ -62,29 +63,25 @@ public class DocIDAnnotator extends JCasAnnotator_ImplBase
 
 	public void process(JCas jCas) throws AnalysisEngineProcessException
 	{
-		String fileString = "", newType = "";
-		try
-		{
-			fileString = FileUtils.readFileToString(new File(ViewURIUtil.getURI(jCas)));
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-		}
 
-		if (fileString.contains(DISCHARGE_SUMMARY))
-			newType = DISCHARGE_SUMMARY;
-		else if (fileString.contains(ECHO_REPORT))
-			newType = ECHO_REPORT;
-		else if (fileString.contains(RADIOLOGY_REPORT))
-			newType = RADIOLOGY_REPORT;
-		else if (fileString.contains(ECG_REPORT))
-			newType = ECG_REPORT;
+		JCas appView = null;
+		try { appView = jCas.getView(SemEval2015Constants.APP_VIEW); } catch (CASException e)
+		{ e.printStackTrace(); }
+
+//		if (fileString.contains(DISCHARGE_SUMMARY))
+//			newType = DISCHARGE_SUMMARY;
+//		else if (fileString.contains(ECHO_REPORT))
+//			newType = ECHO_REPORT;
+//		else if (fileString.contains(RADIOLOGY_REPORT))
+//			newType = RADIOLOGY_REPORT;
+//		else if (fileString.contains(ECG_REPORT))
+//			newType = ECG_REPORT;
 
 		String name = new File(ViewURIUtil.getURI(jCas).getPath()).getName();
-		name = name.replace(SemEval2015CollectionReader.TEXT_SUFFIX, "");
-		name = name + "-" + newType + IDENTIFIER_EXT;
+//		name = name.replace(SemEval2015CollectionReader.TEXT_SUFFIX, "");
+//		name = name + "-" + newType + IDENTIFIER_EXT;
 		/* add doc id for output purposes */
-		DocumentID id = new DocumentID(jCas);
+		DocumentID id = new DocumentID(appView);
 		id.setDocumentID(name);
 		id.addToIndexes();
 	}
