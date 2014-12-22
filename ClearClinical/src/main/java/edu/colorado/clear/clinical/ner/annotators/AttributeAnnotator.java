@@ -163,7 +163,7 @@ public class AttributeAnnotator extends CleartkSequenceAnnotator<String>
 				for (DiseaseDisorderAttribute att: JCasUtil.selectCovered(appView, DiseaseDisorderAttribute.class,
 						sentence.getBegin(), sentence.getEnd()))
 				{
-					FSArray attSpans = new FSArray(jCas, 1);
+					FSArray attSpans = new FSArray(appView, 1);
 					attSpans.set(0, att);
 					att.setSpans(attSpans);
 				}

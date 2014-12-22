@@ -7,6 +7,7 @@ import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.cleartk.util.ViewURIUtil;
 import org.uimafit.component.JCasAnnotator_ImplBase;
 import org.uimafit.descriptor.ConfigurationParameter;
 import org.uimafit.util.JCasUtil;
@@ -46,6 +47,7 @@ public class AbbreviationAnnotator extends JCasAnnotator_ImplBase
 
 	public void process(JCas jCas) throws AnalysisEngineProcessException
 	{
+		System.out.println(ViewURIUtil.getURI(jCas).getPath());
 		for (Sentence s : JCasUtil.select(jCas, Sentence.class))
 		{
 			for (BaseToken t : JCasUtil.selectCovered(jCas, BaseToken.class, s))

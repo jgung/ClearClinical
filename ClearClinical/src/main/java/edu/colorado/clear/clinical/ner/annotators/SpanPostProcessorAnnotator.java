@@ -68,9 +68,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 
 	public void process(JCas jCas) throws AnalysisEngineProcessException
 	{
-		String docID = ((DocumentID) JCasUtil.select(jCas, DocumentID.class).toArray()[0]).getDocumentID();
 
-		log.info("\t\tSpan post processing: " + docID);
 
 		JCas applicationView = null;
 		try
@@ -80,6 +78,9 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 		{
 			e.printStackTrace();
 		}
+		String docID = ((DocumentID) JCasUtil.select(applicationView, DocumentID.class).toArray()[0]).getDocumentID();
+		log.info("\t\tSpan post processing: " + docID);
+
 
 		Collection<DisorderSpanRelation> rels = JCasUtil.select(applicationView, DisorderSpanRelation.class);
 		List<DisorderSpan> usedSpans = new ArrayList<>();
@@ -116,7 +117,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 			}
 
 			DiseaseDisorder disorder = new DiseaseDisorder(applicationView);
-			FSArray relSpans = new FSArray(jCas, 2);
+			FSArray relSpans = new FSArray(applicationView, 2);
 			relSpans.set(0, arg1);
 			relSpans.set(1, arg2);
 			disorder.setSpans(relSpans);
@@ -196,7 +197,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 					}
 				}
 				DiseaseDisorder disorder = new DiseaseDisorder(applicationView);
-				FSArray relSpans = new FSArray(jCas, 1);
+				FSArray relSpans = new FSArray(applicationView, 1);
 				relSpans.set(0, span);
 				disorder.setSpans(relSpans);
 				disorder.setBegin(span.getBegin());

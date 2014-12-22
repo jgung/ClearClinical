@@ -63,14 +63,6 @@ public class DocIDAnnotator extends JCasAnnotator_ImplBase
 
 	public void process(JCas jCas) throws AnalysisEngineProcessException
 	{
-		String fileString = "", newType = "";
-		try
-		{
-			fileString = FileUtils.readFileToString(new File(ViewURIUtil.getURI(jCas)));
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-		}
 
 		JCas appView = null;
 		try { appView = jCas.getView(SemEval2015Constants.APP_VIEW); } catch (CASException e)
