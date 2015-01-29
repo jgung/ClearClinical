@@ -46,17 +46,20 @@ public class ApplicationPipelineTask2
 	public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/data/train";
 	public static String semeval_test_c = resourceDirPath + "semeval-2015-task-14/data/devel";
 
+	public static String outDir = "printSpans";
+
+
 	public static String abbrFile = resourceDirPath + "data/abbr.txt";
 	public static String cuiMapFile = resourceDirPath + "data/cuiMap.txt";
 
-	public static String crfModels = "target/modelsFull/crf";
-	public static String attributeModels = "target/modelsFull/attribute";
-	public static String relModels = "target/modelsFull/rel";
-	public static String attRelModels = "target/modelsFull/attRel";
-	public static String attNormModels = "target/modelsFull/attNorm";
+	public static String crfModels = "target/" + outDir + "/crf";
+	public static String attributeModels = "target/" + outDir + "/attribute";
+	public static String relModels = "target/ " + outDir + "/rel";
+	public static String attRelModels = "target/" + outDir + "/attRel";
+	public static String attNormModels = "target/" + outDir + "/attNorm";
 
 	public static boolean SPAN_RESOLUTION = true;
-	public static boolean VERBOSE = true;
+	public static boolean VERBOSE = false;
 	public static boolean USE_YTEX = false;
 	public static boolean USE_MI = false;
 	public static boolean SKIP_TRAINING = false;
@@ -99,7 +102,8 @@ public class ApplicationPipelineTask2
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
+//		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
+		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015TaskCGoldAnnotator.class,
 				SemEval2015TaskCGoldAnnotator.PARAM_TRAINING,
@@ -182,11 +186,16 @@ public class ApplicationPipelineTask2
 
 		SimplePipeline.runPipeline(reader, builder.createAggregate());
 
+		System.out.println("Training disorder span crf");
 		Train.main(ddModelDir);
+		System.out.println("Training attribute span crf");
 		Train.main(attModelDir);
-		if (SPAN_RESOLUTION) Train.main(relModelDir, "-c", "10", "-s", "1");
-		Train.main(attRelsDir, "-c", "10", "-s", "1");
-		Train.main(attNormDir, "-c", "10", "-s", "1");
+		System.out.println("Training disjoint span svm");
+		if (SPAN_RESOLUTION) Train.main(relModelDir, "-c", "1", "-s", "1");
+		System.out.println("Training att rel svm");
+		Train.main(attRelsDir, "-c", "1", "-s", "1");
+		System.out.println("Training att norm svm");
+		Train.main(attNormDir, "-c", "1", "-s", "1");
 
 		SemEval2015TaskCGoldAnnotator.writeMapToFile(SemEval2015TaskCGoldAnnotator.stringCUIMap, new File(cuiMapFile));
 	}
@@ -199,7 +208,9 @@ public class ApplicationPipelineTask2
 
 		AggregateBuilder builder = new AggregateBuilder();
 		builder.add(UriToDocumentTextAnnotator.getDescription());
-		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
+//		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
+		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(AbbreviationAnnotator.class,
 				AbbreviationAnnotator.PARAM_FILE,
 				new File(abbrFile)));
@@ -241,11 +252,12 @@ public class ApplicationPipelineTask2
 					false,
 					GenericJarClassifierFactory.PARAM_CLASSIFIER_JAR_PATH,
 					new File(relDir, "model.jar").getPath()));
-			builder.add(AnalysisEngineFactory.createPrimitiveDescription(
-					SpanPostProcessorAnnotator.class,
-					SpanPostProcessorAnnotator.PARAM_CUI_FILE_PATH,
-					TrainTestPipeline.resourceDirPath + "cuis"));
 		}
+
+		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+				SpanPostProcessorAnnotator.class,
+				SpanPostProcessorAnnotator.PARAM_CUI_FILE_PATH,
+				TrainTestPipeline.resourceDirPath + "cuis"));
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(
 				AttributeRelationAnnotator.class,
@@ -277,7 +289,7 @@ public class ApplicationPipelineTask2
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
 				SemEval2015Task2Consumer.PARAM_OUTPUT_DIRECTORY,
-				"template_results_test"));
+				outDir));
 
 		if (!VERBOSE) suppressLogging();
 

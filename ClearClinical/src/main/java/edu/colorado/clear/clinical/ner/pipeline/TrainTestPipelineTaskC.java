@@ -111,9 +111,9 @@ public class TrainTestPipelineTaskC
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-//		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
 //		builder.add(ApplicationPipeline.getClearDefaultPipeline(USE_YTEX));
-		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
+//		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015TaskCGoldAnnotator.class,
 				SemEval2015TaskCGoldAnnotator.PARAM_TRAINING,
@@ -215,8 +215,9 @@ public class TrainTestPipelineTaskC
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-//		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
-		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
+//		builder.add(ApplicationPipeline.getClearDefaultPipeline(USE_YTEX));
+		builder.add(ClinicalPipelineFactory.getDefaultPipeline());
+//		builder.add(ClinicalPipelineFactory.getTokenProcessingPipeline());
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015TaskCGoldAnnotator.class,
 				SemEval2015TaskCGoldAnnotator.PARAM_TRAINING,
 				false,

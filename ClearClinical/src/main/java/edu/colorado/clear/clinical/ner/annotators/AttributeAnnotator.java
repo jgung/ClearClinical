@@ -1,6 +1,7 @@
 package edu.colorado.clear.clinical.ner.annotators;
 
 import edu.colorado.clear.clinical.ner.features.spanfeatures.NormalizedFeaturesExtractor;
+import edu.colorado.clear.clinical.ner.features.spanfeatures.UMLSFeaturesExtractor;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import org.apache.ctakes.typesystem.type.syntax.BaseToken;
 import org.apache.ctakes.typesystem.type.textspan.Sentence;
@@ -39,6 +40,7 @@ public class AttributeAnnotator extends CleartkSequenceAnnotator<String>
 	private CleartkExtractor contextExtractor;
 	private CleartkExtractor bagExtractor;
 	private BIOChunking<BaseToken, DiseaseDisorderAttribute> chunking;
+	private UMLSFeaturesExtractor umlsExtractor;
 
 	public static List<List<Feature>> extractFeatures(JCas jCas, AttributeAnnotator annotator, Sentence s)
 			throws AnalysisEngineProcessException
@@ -60,7 +62,9 @@ public class AttributeAnnotator extends CleartkSequenceAnnotator<String>
 			}
 			features.addAll(annotator.extractor.extract(jCas, token));
 			features.addAll(annotator.contextExtractor.extract(jCas, token));
-			features.addAll(annotator.bagExtractor.extract(jCas, token));
+			features.addAll(annotator.umlsExtractor.extract(jCas, token));
+
+//			features.addAll(annotator.bagExtractor.extract(jCas, token));
 			features.add(new Feature("DISCOURSE_SECTION" + annotator.discourseSection, token.getNormalizedForm()));
 			features.add(new Feature("DOC_TYPE" + docType, token.getNormalizedForm()));
 			features.add(new Feature("DISCOURSE_SECTION", annotator.discourseSection));
@@ -95,6 +99,9 @@ public class AttributeAnnotator extends CleartkSequenceAnnotator<String>
 				new CharacterCategoryPatternExtractor(PatternType.REPEATS_MERGED),
 				new TypePathExtractor(BaseToken.class, "partOfSpeech")
 		);
+
+		this.umlsExtractor = new UMLSFeaturesExtractor();
+
 
 		// the context feature extractor: the features above for the 3 preceding and 3 following tokens
 		this.contextExtractor = new CleartkExtractor(

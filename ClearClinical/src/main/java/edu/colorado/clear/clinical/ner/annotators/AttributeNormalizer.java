@@ -42,7 +42,10 @@ public class AttributeNormalizer extends CleartkAnnotator<String>
 			features.add(new Feature("*FULLTEXT",coveredText));
 			for (BaseToken t: JCasUtil.selectCovered(view, BaseToken.class, span))
 			{
-				features.add(new Feature("*UNIGRAM", t.getNormalizedForm()));
+				String normalized = t.getNormalizedForm();
+				if (normalized == null)
+					normalized = "";
+				features.add(new Feature("*UNIGRAM", normalized));
 			}
 			for (Feature f: features)
 			{
@@ -51,6 +54,11 @@ public class AttributeNormalizer extends CleartkAnnotator<String>
 
 			if (this.isTraining()) {
 				Instance<String> instance = new Instance<>(span.getNorm(), features);
+//				System.out.println("span: " + span.getCoveredText());
+//				for (Feature f: features)
+//				{
+//					System.out.println("\t" + f.getName() + "\t" + f.getValue());
+//				}
 				this.dataWriter.write(instance);
 
 			} else {
