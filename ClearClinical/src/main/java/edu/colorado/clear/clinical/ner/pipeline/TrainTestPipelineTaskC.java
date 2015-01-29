@@ -1,12 +1,14 @@
 package edu.colorado.clear.clinical.ner.pipeline;
 
 import com.google.common.base.Function;
+
 import edu.colorado.clear.clinical.ner.annotators.*;
 import edu.colorado.clear.clinical.ner.util.SemEval2015CollectionReader;
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.SemEval2015TaskCGoldAnnotator;
 import edu.uab.ccts.nlp.uima.annotator.MutualInformationAnnotator;
 import edu.uab.ccts.nlp.uima.annotator.SemEval2015Task2Consumer;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory;
 import org.apache.log4j.Level;
@@ -38,6 +40,8 @@ import org.uimafit.util.JCasUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.*;
 
 
@@ -72,6 +76,8 @@ public class TrainTestPipelineTaskC
 	public static boolean USE_YTEX = false;
 	public static boolean USE_MI = false;
 	public static boolean SKIP_TRAINING = false;
+	
+	public static Connection dbConnection = getDatabaseConnection();
 
 	public static void main(String... args) throws Throwable
 	{
@@ -297,10 +303,8 @@ public class TrainTestPipelineTaskC
 					MutualInformationAnnotator.default_db_user,
 					MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
 					MutualInformationAnnotator.default_db_password,
-					MutualInformationAnnotator.PARAM_IS_CONSTRUCTION,
-					false,
 					MutualInformationAnnotator.PARAM_IS_TRAINING,
-					true));
+					false));
 		}
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
@@ -351,7 +355,7 @@ public class TrainTestPipelineTaskC
 		for (JCas jCas : new JCasIterable(reader, engine))
 		{
 			JCas goldView = jCas.getView(SemEval2015Constants.GOLD_VIEW);
-			JCas systemView = jCas.getView(SemEval2015Constants.APP_VIEW);
+			JCas systemView = jCas.getView(SemEval2015Constants.APP_VIEW);//FIXME No sofaFS with name APPLICATION_VIEW found.
 			Collection<DiseaseDisorderAttribute> goldSpans = JCasUtil.select(goldView, DiseaseDisorderAttribute.class);
 			Collection<DiseaseDisorderAttribute> systemSpans = JCasUtil.select(systemView, DiseaseDisorderAttribute.class);
 			Collection<DisorderSpan> goldDisorderSpans = JCasUtil.select(goldView, DisorderSpan.class);
@@ -450,6 +454,20 @@ public class TrainTestPipelineTaskC
 		loggers.add(LogManager.getRootLogger());
 		for (Logger logger : loggers)
 			logger.setLevel(Level.OFF);
+	}
+	
+	public static Connection getDatabaseConnection() {
+		Connection con = null;
+		try {
+			Class.forName("org.hsqldb.jdbc.JDBCDriver" );
+			con = DriverManager.getConnection(MutualInformationAnnotator.default_db_url);
+			if(con!=null) {
+				System.out.println("Initialized database connection");
+			} else {
+				System.out.println("Failed to initialize database connection");
+			}
+		} catch (Exception e) { e.printStackTrace(); }
+		return con;
 	}
 
 	/*

@@ -1,11 +1,13 @@
 package edu.colorado.clear.clinical.ner.annotators;
 
 import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.typesystem.type.structured.DocumentID;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;
+import org.apache.uima.cas.CASRuntimeException;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.cleartk.util.ViewURIUtil;
@@ -65,8 +67,15 @@ public class DocIDAnnotator extends JCasAnnotator_ImplBase
 	{
 
 		JCas appView = null;
-		try { appView = jCas.getView(SemEval2015Constants.APP_VIEW); } catch (CASException e)
-		{ e.printStackTrace(); }
+		try { appView = jCas.getView(SemEval2015Constants.APP_VIEW); } 
+		catch (CASException e) {  e.printStackTrace();
+		} catch (CASRuntimeException cre) {
+			try {
+				appView = jCas.createView(SemEval2015Constants.APP_VIEW);
+			} catch (CASException e1) {
+				e1.printStackTrace();
+			}
+		}
 
 //		if (fileString.contains(DISCHARGE_SUMMARY))
 //			newType = DISCHARGE_SUMMARY;

@@ -51,6 +51,7 @@ public class TrainTestPipeline
 	//public static String semeval_devel = resourceDirPath + "semeval-2015-task-14/subtasks-a-b/data/devel";
 	public static String semeval_devel = resourceDirPath + "semeval-2015-task-14/data/devel";
 	//public static String minidev = resourceDirPath + "semeval-2015-task-14/subtasks-a-b/data/minidev";
+	public static String semeval_test = "/Users/ozborn/Desktop/semeval-2015-task-14/submissions/TEAM-ID/run-0.00/data/test/discharge";
 	public static String minidev = resourceDirPath + "semeval-2015-task-14/data/minidev";
 	public static String abbrFile = resourceDirPath + "data/abbr.txt";
 	public static String cuiMapFile = resourceDirPath + "data/cuiMap.txt";
@@ -104,7 +105,11 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ApplicationPipeline.getClearDefaultPipeline(USE_YTEX));
+		if(USE_YTEX) {
+			builder.add(ApplicationPipeline.getClearDefaultPipeline());
+		} else {
+			builder.add(org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.getDefaultPipeline());
+		}
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
 				true,
@@ -161,7 +166,11 @@ public class TrainTestPipeline
 				files);
 
 		AggregateBuilder builder = new AggregateBuilder();
-		builder.add(ApplicationPipeline.getClearDefaultPipeline(USE_YTEX));
+		if(USE_YTEX) {
+			builder.add(ApplicationPipeline.getClearDefaultPipeline());
+		} else {
+			builder.add(org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory.getDefaultPipeline());
+		}
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015GoldAnnotator.class,
 				SemEval2015GoldAnnotator.PARAM_TRAINING,
 				false,

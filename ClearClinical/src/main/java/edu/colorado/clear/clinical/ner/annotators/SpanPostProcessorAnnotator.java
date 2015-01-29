@@ -63,7 +63,7 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 	public void initialize(UimaContext context) throws ResourceInitializationException
 	{
 		super.initialize(context);
-		util = new UTSApiUtil();
+		if(!useYtex) util = new UTSApiUtil();
 	}
 
 	public void process(JCas jCas) throws AnalysisEngineProcessException
@@ -104,15 +104,17 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 				add = true;
 			} else
 			{
-				List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
-				if (list.size() > 0)
-				{
-					cui = list.get(0).getUi();
-					log.debug(text + " UTS CUI:" + cui);
-					add = true;
-				} else
-				{
-					log.debug(text + " UTS CUI Lookup Failure");
+				if(!useYtex) {
+					List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
+					if (list.size() > 0)
+					{
+						cui = list.get(0).getUi();
+						log.debug(text + " UTS CUI:" + cui);
+						add = true;
+					} else
+					{
+						log.debug(text + " UTS CUI Lookup Failure");
+					}
 				}
 			}
 
@@ -157,15 +159,15 @@ public class SpanPostProcessorAnnotator extends JCasAnnotator_ImplBase
 					add = true;
 				} else
 				{
-					List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
-					if (list.size() > 0)
-					{
-						cui = list.get(0).getUi();
-						log.debug("UTS CUI:" + list.get(0).getUi() + " Label:" + cui);
-						add = true;
-					}
-					if (useYtex == true)
-					{
+					if(!useYtex) {
+						List<UiLabel> list = util.filterConcepts(util.findConcepts(text));
+						if (list.size() > 0)
+						{
+							cui = list.get(0).getUi();
+							log.debug("UTS CUI:" + list.get(0).getUi() + " Label:" + cui);
+							add = true;
+						}
+					} else {
 						int text_length = 0;
 						for (IdentifiedAnnotation ia : JCasUtil.subiterate(applicationView, IdentifiedAnnotation.class, span, true, false))
 						{

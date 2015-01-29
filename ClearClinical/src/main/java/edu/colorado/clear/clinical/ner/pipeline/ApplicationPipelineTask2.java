@@ -6,6 +6,7 @@ import edu.colorado.clear.clinical.ner.util.SemEval2015Constants;
 import edu.colorado.clear.clinical.ner.util.SemEval2015TaskCGoldAnnotator;
 import edu.uab.ccts.nlp.uima.annotator.MutualInformationAnnotator;
 import edu.uab.ccts.nlp.uima.annotator.SemEval2015Task2Consumer;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.ctakes.clinicalpipeline.ClinicalPipelineFactory;
 import org.apache.log4j.Level;
@@ -41,6 +42,7 @@ import java.util.List;
 public class ApplicationPipelineTask2
 {
 
+	
 	public static String resourceDirPath = "src/main/resources/";
 
 	public static String semeval_train_c = resourceDirPath + "semeval-2015-task-14/data/train";
@@ -281,10 +283,8 @@ public class ApplicationPipelineTask2
 					MutualInformationAnnotator.default_db_user,
 					MutualInformationAnnotator.PARAM_MI_DATABASE_PASSWORD,
 					MutualInformationAnnotator.default_db_password,
-					MutualInformationAnnotator.PARAM_IS_CONSTRUCTION,
-					false,
 					MutualInformationAnnotator.PARAM_IS_TRAINING,
-					true));
+					false));
 		}
 
 		builder.add(AnalysisEngineFactory.createPrimitiveDescription(SemEval2015Task2Consumer.class,
